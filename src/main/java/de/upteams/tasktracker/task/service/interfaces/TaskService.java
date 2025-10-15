@@ -1,6 +1,7 @@
 package de.upteams.tasktracker.task.service.interfaces;
 
 import de.upteams.tasktracker.task.dto.TaskDto;
+import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.entity.Task;
 import de.upteams.tasktracker.user.entity.AppUser;
 
@@ -23,5 +24,7 @@ public interface TaskService {
     List<TaskDto> getAll(String projectId, AppUser authUser);
 
     void delete(String id, AppUser changer);
+
+    TaskDto updateTask(String id, TaskUpdateRequestDto updateDto);
 
 }

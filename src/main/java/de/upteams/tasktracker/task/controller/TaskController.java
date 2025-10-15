@@ -3,6 +3,7 @@ package de.upteams.tasktracker.task.controller;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import de.upteams.tasktracker.task.controller.api.TaskApi;
 import de.upteams.tasktracker.task.dto.TaskDto;
+import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.service.interfaces.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +18,7 @@ public class TaskController implements TaskApi {
      * Service for various operations with Tasks
      */
     private final TaskService service;
+    private final TaskService taskService;
 
     @Override
     public TaskDto save(
@@ -48,5 +50,10 @@ public class TaskController implements TaskApi {
             AuthUserDetails principal
     ) {
         service.delete(id, principal.user());
+    }
+
+    @Override
+    public TaskDto update(String id, TaskUpdateRequestDto updateDto, AuthUserDetails principal) {
+        return taskService.updateTask(id, updateDto);
     }
 }

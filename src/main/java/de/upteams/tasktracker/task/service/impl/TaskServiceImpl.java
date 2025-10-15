@@ -6,6 +6,7 @@ import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiExcept
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.project.service.interfaces.ProjectService;
 import de.upteams.tasktracker.task.dto.TaskDto;
+import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.entity.Task;
 import de.upteams.tasktracker.task.exception.TaskNotFoundException;
 import de.upteams.tasktracker.task.persistence.TaskRepository;
@@ -13,6 +14,7 @@ import de.upteams.tasktracker.task.service.interfaces.TaskService;
 import de.upteams.tasktracker.task.utils.TaskMappingService;
 import de.upteams.tasktracker.user.entity.AppUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +33,7 @@ public class TaskServiceImpl implements TaskService {
     private final TaskMappingService mappingService;
     private final ProjectService projectService;
     private final CollaboratorService collaboratorService;
+    private final TaskMappingService taskMappingService;
 
     @Override
     public TaskDto save(final TaskDto newTaskDto) {
@@ -81,6 +84,20 @@ public class TaskServiceImpl implements TaskService {
             throw new RestApiException(HttpStatus.FORBIDDEN, "User has no access to this project");
         }
         repository.delete(existedTask);
+    }
+
+    @Override
+    public TaskDto updateTask(String id, TaskUpdateRequestDto updateDto) {
+        UUID uuid = UUID.fromString(id);
+
+        Task task = repository.findById(uuid)
+                .orElseThrow(TaskNotFoundException::new);
+
+        task.setTitle(updateDto.title());
+        task.setDescription(updateDto.description());
+
+        repository.save(task);
+        return taskMappingService.mapEntityToDto(task);
     }
 
 }

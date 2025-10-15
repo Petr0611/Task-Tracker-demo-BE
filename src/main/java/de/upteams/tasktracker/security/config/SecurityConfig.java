@@ -78,14 +78,23 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/webjars/**").permitAll()
 
+
                         // Register/confirmation
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/register").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/confirm/{code}").permitAll()
 
                         // авторизация пользователя
-                        .requestMatchers(HttpMethod.POST, "api/v1/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "api/v1/auth/refresh-token").permitAll()
-                        .requestMatchers(HttpMethod.POST, "api/v1/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh-token").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").permitAll()
+
+
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/tasks/{id}").permitAll()
+
+
+                        // временно разрешаем создание проекта без авторизации
+                        .requestMatchers(HttpMethod.POST, "/api/v1/projects").permitAll()
+
 
                         .anyRequest().authenticated()
                 )

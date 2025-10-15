@@ -4,6 +4,7 @@ import de.upteams.tasktracker.exception.handling.response.ErrorResponseDto;
 import de.upteams.tasktracker.exception.handling.response.ValidationErrorDto;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import de.upteams.tasktracker.task.dto.TaskDto;
+import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -138,6 +139,33 @@ public interface TaskApi {
     void deleteById(
             @PathVariable
             String id,
+
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
+    );
+
+    @Operation(summary = "Update Task", description = "Updates an existing task by its ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Task successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = TaskDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid update payload",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = ValidationErrorDto.class)))),
+            @ApiResponse(responseCode = "404", description = "Task not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+
+    @PutMapping("/{id}")
+    TaskDto update(
+            @PathVariable
+            String id,
+
+            @RequestBody
+            @Parameter(description = "Updated task data", required = true)
+            TaskUpdateRequestDto updateDto,
 
             @AuthenticationPrincipal
             @Parameter(hidden = true)
