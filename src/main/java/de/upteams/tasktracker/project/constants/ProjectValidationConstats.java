@@ -6,7 +6,7 @@ public final class ProjectValidationConstats {
         throw new IllegalStateException("Utility class");
     }
 
-    public static final String NAME_REGEX = "[^[A-Z][a-zA-Z0-9 ]{2,154}$]";
+    public static final String NAME_REGEX = "^[A-Z][a-zA-Z0-9 ]{2,154}$";
     public static final int NAME_MIN_LENGTH = 3;
     public static final int NAME_MAX_LENGTH = 155;
 }
