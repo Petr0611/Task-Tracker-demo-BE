@@ -52,3 +52,5 @@ jwt:
 springdoc:
   swagger-ui:
     with-credentials: true
+
+
