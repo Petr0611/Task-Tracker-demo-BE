@@ -1,6 +1,7 @@
 package de.upteams.tasktracker.project.service.impl;
 
 import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
+import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.project.exception.ProjectNotFoundException;
@@ -55,5 +56,21 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public void delete(String id) {
         repository.deleteById(UUID.fromString(id));
+    }
+
+    @Override
+    public ProjectResponseDto updateProject(String id, ProjectUpdateDto updateDTO) {
+        Project project = getOrTrow(id);
+
+        if (updateDTO.title() != null && !updateDTO.title().isBlank()) {
+            project.setTitle(updateDTO.title());
+        }
+
+        if (updateDTO.description() != null && !updateDTO.description().isBlank()) {
+            project.setDescription(updateDTO.description());
+        }
+
+        Project updatedProject = repository.save(project);
+        return mappingService.mapEntityToDto(updatedProject);
     }
 }

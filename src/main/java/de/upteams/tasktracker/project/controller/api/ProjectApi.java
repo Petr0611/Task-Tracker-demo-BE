@@ -3,6 +3,7 @@ package de.upteams.tasktracker.project.controller.api;
 import de.upteams.tasktracker.exception.handling.response.ErrorResponseDto;
 import de.upteams.tasktracker.exception.handling.response.ValidationErrorDto;
 import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
+import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -130,4 +131,32 @@ public interface ProjectApi {
             @Parameter(required = true, description = "Project ID to delete")
             String id
     );
+
+    @Operation(summary = "Update Project", description = "Update the Project's title and/or description by its ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Project successfully updated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ProjectResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "Project not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid payload",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = ValidationErrorDto.class))))
+    })
+    @PutMapping("/{id}")
+    ProjectResponseDto update(
+            @PathVariable
+            @Parameter(required = true, description = "Project ID to update")
+            String id,
+
+            @RequestBody
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Updated Project fields"
+            )
+            @Valid
+            ProjectUpdateDto updateDto
+    );
+
 }
