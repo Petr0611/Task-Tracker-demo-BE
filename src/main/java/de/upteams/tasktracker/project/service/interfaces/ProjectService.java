@@ -1,6 +1,7 @@
 package de.upteams.tasktracker.project.service.interfaces;
 
 import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
+import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.user.entity.AppUser;
@@ -21,4 +22,6 @@ public interface ProjectService {
     List<ProjectResponseDto> getAll();
 
     void delete(String id);
+
+    ProjectResponseDto updateProject(String id, ProjectUpdateDto updateDto);
 }
