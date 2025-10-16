@@ -1,6 +1,7 @@
 package de.upteams.tasktracker.user.controller.impl;
 
 import de.upteams.tasktracker.user.controller.interfaces.RegisterControllerApi;
+import de.upteams.tasktracker.user.dto.UserConfirmResponseDto;
 import de.upteams.tasktracker.user.dto.request.UserCreateDto;
 import de.upteams.tasktracker.user.dto.response.UserCreateResponseDto;
 import de.upteams.tasktracker.user.dto.response.UserResponseDto;
@@ -22,7 +23,7 @@ public class RegisterControllerImpl implements RegisterControllerApi {
     }
 
     @Override
-    public UserResponseDto confirmRegistration(String code) {
+    public UserConfirmResponseDto confirmRegistration(String code) {
         return service.confirmRegistration(code);
     }
 }

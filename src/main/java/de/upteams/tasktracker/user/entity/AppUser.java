@@ -44,6 +44,22 @@ public class AppUser extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    // Новые поля для расширенного профиля
+    @Column(name = "display_name", length = 255)
+    private String displayName;
+
+    @Column(name = "position", length = 255)
+    private String position;
+
+    @Column(name = "department", length = 255)
+    private String department;
+
+    @Column(name = "avatar_url", length = 512)
+    private String avatarUrl;
+
+    @Column(name = "bio", columnDefinition = "TEXT")
+    private String bio;
+
     public AppUser(String password, String email) {
         this.password = password;
         this.email = email;
@@ -58,6 +74,11 @@ public class AppUser extends BaseEntity {
                 ", password='" + (StringUtils.isBlank(password) ? "null" : "*hidden*") + '\'' +
                 ", email='" + email + '\'' +
                 ", role=" + role +
+                ", displayName='" + displayName + '\'' +
+                ", position='" + position + '\'' +
+                ", department='" + department + '\'' +
+                ", avatarUrl='" + avatarUrl + '\'' +
+                ", bio='" + bio + '\'' +
                 '}';
     }
 }

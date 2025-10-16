@@ -2,9 +2,9 @@ package de.upteams.tasktracker.user.controller.interfaces;
 
 import de.upteams.tasktracker.exception.handling.response.ErrorResponseDto;
 import de.upteams.tasktracker.exception.handling.response.ValidationErrorDto;
+import de.upteams.tasktracker.user.dto.UserConfirmResponseDto;
 import de.upteams.tasktracker.user.dto.request.UserCreateDto;
 import de.upteams.tasktracker.user.dto.response.UserCreateResponseDto;
-import de.upteams.tasktracker.user.dto.response.UserResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,8 +20,10 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "User Registration", description = "Endpoints for user registration and email confirmation")
 public interface RegisterControllerApi {
 
-
-    @Operation(summary = "Register new user", description = "Creates a new user account and sends a confirmation email. If user already exists but is unconfirmed, resends the confirmation email.")
+    @Operation(
+            summary = "Register new user",
+            description = "Creates a new user account and sends a confirmation email. If user already exists but is unconfirmed, resends the confirmation email."
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "User registered successfully",
                     content = @Content(mediaType = "application/json",
@@ -67,11 +69,14 @@ public interface RegisterControllerApi {
             UserCreateDto registerUser
     );
 
-    @Operation(summary = "Confirm user registration", description = "Confirms a user's registration using a confirmation code sent via email.")
+    @Operation(
+            summary = "Confirm user registration",
+            description = "Confirms a user's registration using a confirmation code sent via email."
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User confirmed successfully",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = UserResponseDto.class),
+                            schema = @Schema(implementation = UserConfirmResponseDto.class), // ✅ обновлено
                             examples = @ExampleObject(value = """
                                     {
                                       "email": "tes_dev@upteams.de",
@@ -95,8 +100,8 @@ public interface RegisterControllerApi {
             )
     })
     @GetMapping("/confirm/{code}")
-    UserResponseDto confirmRegistration(
-            @PathVariable
-            String code
+    UserConfirmResponseDto confirmRegistration( // ✅ изменили тип
+                                                @PathVariable
+                                                String code
     );
 }

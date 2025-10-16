@@ -1,9 +1,9 @@
 package de.upteams.tasktracker.user.controller.interfaces;
 
+import de.upteams.tasktracker.user.dto.UserUpdateDto;
 import de.upteams.tasktracker.user.dto.response.UserResponseDto;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -14,8 +14,21 @@ import java.util.List;
 @RequestMapping("/api/v1/users")
 public interface UserApi extends UserApiSwaggerDoc {
 
-    @Override
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
     List<UserResponseDto> getAll();
+
+    /**
+     * Обновляет профиль текущего пользователя
+     */
+    @PutMapping("/update")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    UserResponseDto updateUser(@RequestBody UserUpdateDto dto);
+
+    /**
+     * Обновляет пользователя по ID (только для администратора)
+     */
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    UserResponseDto updateUserById(@PathVariable String id, @RequestBody UserUpdateDto dto);
 }
