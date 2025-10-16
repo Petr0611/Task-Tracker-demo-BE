@@ -10,4 +10,8 @@ public class UserNotFoundException extends RestApiException {
     public UserNotFoundException() {
         super(HttpStatus.NOT_FOUND, MESSAGE);
     }
+
+    public UserNotFoundException(String message) {
+        super(HttpStatus.NOT_FOUND, message);
+    }
 }

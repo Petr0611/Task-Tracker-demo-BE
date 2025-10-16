@@ -3,6 +3,7 @@ package de.upteams.tasktracker.user.service.impl;
 import de.upteams.tasktracker.mail.EmailService;
 import de.upteams.tasktracker.mail.confirmation.code.ConfirmationCode;
 import de.upteams.tasktracker.mail.confirmation.code.interfaces.ConfirmationService;
+import de.upteams.tasktracker.user.dto.UserConfirmResponseDto;
 import de.upteams.tasktracker.user.dto.request.UserCreateDto;
 import de.upteams.tasktracker.user.dto.response.UserCreateResponseDto;
 import de.upteams.tasktracker.user.dto.response.UserResponseDto;
@@ -67,7 +68,7 @@ public class UserRegisterService {
     }
 
     @Transactional
-    public UserResponseDto confirmRegistration(final String code) {
+    public UserConfirmResponseDto confirmRegistration(final String code) {
         final ConfirmationCode confirmationToken = confirmationService.getConfirmationIfValidOrThrow(code);
 
         final AppUser registeredUser = confirmationToken.getUser();
@@ -76,7 +77,7 @@ public class UserRegisterService {
 
         confirmationService.removeToken(confirmationToken);
 
-        return new UserResponseDto(
+        return new UserConfirmResponseDto(
                 registeredUser.getEmail(),
                 registeredUser.getRole().name(),
                 registeredUser.getConfirmationStatus()

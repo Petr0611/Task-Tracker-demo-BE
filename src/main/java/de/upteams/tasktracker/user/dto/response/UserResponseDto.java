@@ -26,5 +26,35 @@ public record UserResponseDto(
                 example     = "UNCONFIRMED",
                 accessMode  = Schema.AccessMode.READ_ONLY
         )
-        ConfirmationStatus confirmationStatus
+        ConfirmationStatus confirmationStatus,
+
+        @Schema(
+                description = "Display name of the user",
+                example     = "Homer Simpson"
+        )
+        String displayName,
+
+        @Schema(
+                description = "User's job position",
+                example     = "Developer"
+        )
+        String position,
+
+        @Schema(
+                description = "Department or team of the user",
+                example     = "Engineering"
+        )
+        String department,
+
+        @Schema(
+                description = "URL of the user's avatar",
+                example     = "https://example.com/avatar/homer.png"
+        )
+        String avatarUrl,
+
+        @Schema(
+                description = "Short biography or info about the user",
+                example     = "Loves donuts and coding"
+        )
+        String bio
 ) {}
