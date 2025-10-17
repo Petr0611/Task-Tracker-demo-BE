@@ -1,5 +1,6 @@
 package de.upteams.tasktracker.user.service.impl;
 
+import de.upteams.tasktracker.invitation.service.interfaces.InvitationService;
 import de.upteams.tasktracker.mail.EmailService;
 import de.upteams.tasktracker.mail.confirmation.code.ConfirmationCode;
 import de.upteams.tasktracker.mail.confirmation.code.interfaces.ConfirmationService;
@@ -27,6 +28,7 @@ public class UserRegisterService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final ConfirmationService confirmationService;
     private final UserService userService;
+    private final InvitationService invitationService;
 
     @Transactional
     public UserCreateResponseDto register(final UserCreateDto dto) {
@@ -43,6 +45,8 @@ public class UserRegisterService {
 
         String confirmationCode = confirmationService.generateConfirmationCode(savedNewUser);
         emailService.sendConfirmationEmail(savedNewUser.getEmail(), confirmationCode);
+
+        invitationService.processPendingInvitations(savedNewUser.getEmail());
 
         return new UserCreateResponseDto(
                 savedNewUser.getId().toString(),

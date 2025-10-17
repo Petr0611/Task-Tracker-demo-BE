@@ -1,6 +1,13 @@
 package de.upteams.tasktracker.project.service.impl;
 
+import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
+import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
+import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
+import de.upteams.tasktracker.invitation.dto.ProjectInvitationResponseDto;
+import de.upteams.tasktracker.invitation.service.interfaces.InvitationService;
+import de.upteams.tasktracker.project.dto.request.ProjectCollaboratorAddRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
+import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.entity.Project;
@@ -9,10 +16,14 @@ import de.upteams.tasktracker.project.persistence.ProjectRepository;
 import de.upteams.tasktracker.project.service.interfaces.ProjectService;
 import de.upteams.tasktracker.project.utils.ProjectMapper;
 import de.upteams.tasktracker.user.entity.AppUser;
+import de.upteams.tasktracker.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -24,6 +35,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository repository;
     private final ProjectMapper mappingService;
+    private final CollaboratorService collaboratorService;
+    private final InvitationService invitationService;
+    private final UserService userService;
 
     @Override
     public ProjectResponseDto save(ProjectCreateDto newProjectDto, AppUser projectOwner) {
@@ -72,5 +86,53 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project updatedProject = repository.save(project);
         return mappingService.mapEntityToDto(updatedProject);
+    }
+
+    @Override
+    public void addUserToProject(String projectId, ProjectCollaboratorAddRequestDto requestDto, AppUser initiator) {
+        Project project = getOrTrow(projectId);
+
+        enforceTeamManagementPermission(project, initiator);
+
+        AppUser userToAdd = userService.getByIdOrThrow(requestDto.userId());
+        Set<ProjectRoles> roles = EnumSet.copyOf(requestDto.roles());
+        collaboratorService.addCollaborator(userToAdd, project, roles);
+    }
+
+    @Override
+    public ProjectInvitationResponseDto inviteUserToProject(String projectId, ProjectInvitationRequestDto requestDto, AppUser initiator) {
+        Project project = getOrTrow(projectId);
+
+        enforceTeamManagementPermission(project, initiator);
+
+        InvitationService.InvitationCreationResult creationResult = invitationService.createOrRenewInvitation(
+                project,
+                requestDto.email(),
+                requestDto.role()
+        );
+
+        return new ProjectInvitationResponseDto(
+                creationResult.invitation().getInviteToken(),
+                creationResult.invitation().getExpiresAt(),
+                creationResult.invitation().getStatus(),
+                creationResult.registeredUser()
+        );
+    }
+
+    private void enforceTeamManagementPermission(Project project, AppUser initiator) {
+        boolean isOwner = project.getOwner().equals(initiator);
+        if (isOwner) {
+            return;
+        }
+
+        boolean hasPermission = collaboratorService.hasUserPermission(
+                initiator,
+                project,
+                List.of(ProjectRoles.ADMIN, ProjectRoles.OWNER)
+        );
+
+        if (!hasPermission) {
+            throw new RestApiException(HttpStatus.FORBIDDEN, "User has no rights to manage project team");
+        }
     }
 }
