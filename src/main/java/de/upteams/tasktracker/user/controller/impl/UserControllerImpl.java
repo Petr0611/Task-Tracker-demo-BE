@@ -38,6 +38,14 @@ public class UserControllerImpl implements UserApi {
     }
 
     /**
+     * Returns the user by id
+     */
+    @Override
+    public UserResponseDto getById(String id) {
+        return mapToDto(service.getByIdOrThrow(id));
+    }
+
+    /**
      * Updates profile of the current authenticated user
      */
     @Override

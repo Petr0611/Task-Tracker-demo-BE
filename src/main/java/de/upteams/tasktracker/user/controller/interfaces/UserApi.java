@@ -27,6 +27,13 @@ public interface UserApi extends UserApiSwaggerDoc {
     UserResponseDto getCurrentUser(Authentication authentication);
 
     /**
+     * Возвращает пользователя по email
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    UserResponseDto getById(@PathVariable String id);
+
+    /**
      * Обновляет профиль текущего пользователя
      */
     @PutMapping("/update")

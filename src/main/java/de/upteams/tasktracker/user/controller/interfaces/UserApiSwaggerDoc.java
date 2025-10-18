@@ -54,7 +54,7 @@ public interface UserApiSwaggerDoc {
     List<UserResponseDto> getAll();
 
     @Operation(
-            summary = "Get current user",
+            summary = "Returns dto of current user",
             description = "Returns UserResponseDto of currently authenticated user."
     )
     @ApiResponses({
@@ -77,6 +77,48 @@ public interface UserApiSwaggerDoc {
             )
     })
     UserResponseDto getCurrentUser(Authentication authentication);
+
+    @Operation(
+            summary = "Returns user by its ID ",
+            description = "Allows admins to get any user's profile by specifying their unique ID."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UserResponseDto.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request payload",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Access denied",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            )
+    })
+    UserResponseDto getById(
+            @Parameter(
+                    description = "Unique ID of user (UUID format).",
+                    required = true,
+                    example = "c3a39ef0-12a9-4a02-8235-947e6cf25b17"
+            )
+            String id);
 
     @Operation(
             summary = "Update current user profile",
@@ -120,6 +162,7 @@ public interface UserApiSwaggerDoc {
             )
     })
     UserResponseDto updateUser(UserUpdateDto dto);
+
     @Operation(
             summary = "Update user by ID (admin only)",
             description = "Allows admins to update any user's profile by specifying their unique ID."
