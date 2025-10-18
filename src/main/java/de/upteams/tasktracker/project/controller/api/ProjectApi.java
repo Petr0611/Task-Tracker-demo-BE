@@ -1,5 +1,6 @@
 package de.upteams.tasktracker.project.controller.api;
 
+import de.upteams.tasktracker.collaborator.dto.UpdateCollaboratorRolesDto;
 import de.upteams.tasktracker.exception.handling.response.ErrorResponseDto;
 import de.upteams.tasktracker.exception.handling.response.ValidationErrorDto;
 import de.upteams.tasktracker.invitation.dto.ProjectInvitationResponseDto;
@@ -235,6 +236,26 @@ public interface ProjectApi {
             @AuthenticationPrincipal
             @Parameter(hidden = true)
             AuthUserDetails principal
+    );
+
+    @Operation(
+            summary = "Update collaborator roles",
+            description = "Allows OWNER or ADMIN to change roles of an existing project collaborator."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Roles updated successfully"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — only OWNER or ADMIN can update roles",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "Project or collaborator not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @PutMapping("/{projectId}/collaborators/{userId}/roles")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void updateCollaboratorRoles(
+            @PathVariable String projectId,
+            @PathVariable String userId,
+            @RequestBody @Valid UpdateCollaboratorRolesDto dto,
+            @AuthenticationPrincipal @Parameter(hidden = true) AuthUserDetails principal
     );
 
 }
