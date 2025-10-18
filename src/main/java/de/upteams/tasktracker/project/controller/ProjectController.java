@@ -1,12 +1,17 @@
 package de.upteams.tasktracker.project.controller;
 
+import de.upteams.tasktracker.invitation.dto.ProjectInvitationResponseDto;
 import de.upteams.tasktracker.project.controller.api.ProjectApi;
+import de.upteams.tasktracker.project.dto.request.ProjectCollaboratorAddRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
+import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.service.interfaces.ProjectService;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -46,5 +51,17 @@ public class ProjectController implements ProjectApi {
     @Override
     public ProjectResponseDto update(String id, ProjectUpdateDto updateDto) {
         return service.updateProject(id, updateDto);
+    }
+
+    @Override
+    public void addUserToProject(String id, ProjectCollaboratorAddRequestDto requestDto, AuthUserDetails principal) {
+        service.addUserToProject(id, requestDto, principal.user());
+    }
+
+    @Override
+    public ResponseEntity<ProjectInvitationResponseDto> inviteUserToProject(String id, ProjectInvitationRequestDto requestDto, AuthUserDetails principal) {
+        ProjectInvitationResponseDto responseDto = service.inviteUserToProject(id, requestDto, principal.user());
+        HttpStatus status = responseDto.registeredUser() ? HttpStatus.OK : HttpStatus.ACCEPTED;
+        return ResponseEntity.status(status).body(responseDto);
     }
 }

@@ -1,5 +1,6 @@
 package de.upteams.tasktracker.collaborator.entity;
 
+
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.task.entity.Task;
 import de.upteams.tasktracker.user.entity.AppUser;
@@ -9,7 +10,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,12 +33,23 @@ public class Collaborator extends BaseEntity {
     @ManyToOne
     private Project project;
 
-    @NotNull
+
+    @ElementCollection(targetClass = ProjectRoles.class, fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "collaborator_roles",
+            joinColumns = @JoinColumn(name = "collaborator_id")
+    )
     @Enumerated(EnumType.STRING)
-    private final Set<ProjectRoles> projectRolesSet = new HashSet<>();
+    private Set<ProjectRoles> projectRolesSet = EnumSet.noneOf(ProjectRoles.class);
 
     @ManyToMany
     private final Set<Task> tasks = new HashSet<>();
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    @ColumnDefault("'ACTIVE'")
+    private CollaboratorStatus status = CollaboratorStatus.ACTIVE;
 
     @Override
     public String toString() {
@@ -43,6 +57,7 @@ public class Collaborator extends BaseEntity {
                 "id=" + id +
                 ", tasks=" + getIdsForToString(tasks) +
                 ", projectRolesSet=" + projectRolesSet +
+                ", status=" + status +
                 ", project=" + getIdForToString(project) +
                 ", appUserId=" + getIdForToString(appUser) +
                 '}';

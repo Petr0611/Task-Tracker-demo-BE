@@ -2,7 +2,10 @@ package de.upteams.tasktracker.project.controller.api;
 
 import de.upteams.tasktracker.exception.handling.response.ErrorResponseDto;
 import de.upteams.tasktracker.exception.handling.response.ValidationErrorDto;
+import de.upteams.tasktracker.invitation.dto.ProjectInvitationResponseDto;
+import de.upteams.tasktracker.project.dto.request.ProjectCollaboratorAddRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
+import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
@@ -16,6 +19,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -157,6 +162,79 @@ public interface ProjectApi {
             )
             @Valid
             ProjectUpdateDto updateDto
+    );
+
+    @Operation(summary = "Add collaborator to project", description = "Assign a user to the project team with specified roles")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Collaborator successfully added"),
+            @ApiResponse(responseCode = "400", description = "Invalid payload",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = ValidationErrorDto.class)))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "Project or user not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "409", description = "Collaborator already exists",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @PostMapping("/{id}/collaborators")
+    @ResponseStatus(HttpStatus.CREATED)
+    void addUserToProject(
+            @PathVariable
+            @Parameter(required = true, description = "Project ID to update")
+            String id,
+
+            @RequestBody
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Collaborator assignment data"
+            )
+            @Valid
+            ProjectCollaboratorAddRequestDto requestDto,
+
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
+    );
+
+    @Operation(summary = "Invite collaborator to project", description = "Send an email invitation to join the project team")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Invitation sent to registered user",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ProjectInvitationResponseDto.class))),
+            @ApiResponse(responseCode = "202", description = "Invitation sent to unregistered user",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ProjectInvitationResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid payload",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = ValidationErrorDto.class)))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "Project not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @PostMapping("/{id}/invitations")
+    ResponseEntity<ProjectInvitationResponseDto> inviteUserToProject(
+            @PathVariable
+            @Parameter(required = true, description = "Project ID to invite to")
+            String id,
+
+            @RequestBody
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Invitation payload"
+            )
+            @Valid
+            ProjectInvitationRequestDto requestDto,
+
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
     );
 
 }

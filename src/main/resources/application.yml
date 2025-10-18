@@ -32,6 +32,7 @@ confirmation:
 
 app:
   base-url: ${BASE_URL}
+  frontend-url: ${FRONTEND_BASE_URL:${BASE_URL}}
 
 digitalocean:
   spaces:
