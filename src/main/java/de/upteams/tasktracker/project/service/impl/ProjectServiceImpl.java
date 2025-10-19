@@ -43,7 +43,10 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectResponseDto save(ProjectCreateDto newProjectDto, AppUser projectOwner) {
         Project project = mappingService.mapDtoToEntity(newProjectDto);
         project.setOwner(projectOwner);
-        return mappingService.mapEntityToDto(repository.save(project));
+        Project savedProject = repository.save(project);
+
+        collaboratorService.addCollaborator(projectOwner, savedProject, Set.of(ProjectRoles.OWNER));
+        return mappingService.mapEntityToDto(savedProject);
     }
 
     @Override
