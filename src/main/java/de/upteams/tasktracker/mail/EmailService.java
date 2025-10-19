@@ -36,7 +36,8 @@ public class EmailService {
     }
 
     public void sendPasswordResetEmail(String email, String token) {
-        String resetLink = "https://your-frontend.com/reset-password?token=" + token;
+        String resetLink = "%s/reset-password?token=%s"
+                .formatted(frontendBaseUrl.replaceAll("/+$", ""), token);
         String subject = "Password Reset Request";
         String body = "Click the link to reset your password: " + resetLink;
         emailSender.sendEmail(email, subject, body);

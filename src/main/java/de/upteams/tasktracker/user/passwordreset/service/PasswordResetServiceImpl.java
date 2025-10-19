@@ -35,7 +35,7 @@ public class PasswordResetServiceImpl implements PasswordResetService{
         resetToken.setExpireDate(LocalDateTime.now().plusHours(1));
 
         tokenRepository.save(resetToken);
-        emailService.sendConfirmationEmail(user.getEmail(), token);
+        emailService.sendPasswordResetEmail(user.getEmail(), token);
 
     }
 

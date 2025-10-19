@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Table(name = "password_reset_token")
 public class PasswordResetToken extends BaseEntity {
 
+    @Column(nullable = false, unique = true)
     private String token;
 
     @OneToOne
