@@ -5,6 +5,8 @@ import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorServic
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.project.service.interfaces.ProjectService;
+import de.upteams.tasktracker.task.constants.TaskValidationConstats;
+import de.upteams.tasktracker.task.dto.TaskCreateRequestDto;
 import de.upteams.tasktracker.task.dto.TaskDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.entity.Task;
@@ -14,7 +16,6 @@ import de.upteams.tasktracker.task.service.interfaces.TaskService;
 import de.upteams.tasktracker.task.utils.TaskMappingService;
 import de.upteams.tasktracker.user.entity.AppUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -33,71 +34,118 @@ public class TaskServiceImpl implements TaskService {
     private final TaskMappingService mappingService;
     private final ProjectService projectService;
     private final CollaboratorService collaboratorService;
-    private final TaskMappingService taskMappingService;
 
     @Override
-    public TaskDto save(final TaskDto newTaskDto) {
-        final Task entity = mappingService.mapDtoToEntity(newTaskDto);
-        return mappingService.mapEntityToDto(repository.save(entity));
-    }
+        public TaskDto save(final TaskCreateRequestDto newTaskDto, final AppUser creator) {
+            final Project project = getProjectOrThrow(newTaskDto.projectId());
+            enforceProjectAccess(project, creator);
 
-    @Override
-    public TaskDto getById(String id) {
-        return mappingService.mapEntityToDto(getOrThrow(id));
-    }
+            final Task entity = new Task();
+            entity.setTitle(newTaskDto.title());
+            entity.setDescription(newTaskDto.description());
+            entity.setProject(project);
 
-    @Override
-    public Task getOrThrow(String id) {
-        return findById(id)
-                .orElseThrow(TaskNotFoundException::new);
-    }
-
-    @Override
-    public Optional<Task> findById(String id) {
-        return repository
-                .findById(UUID.fromString(id));
-    }
-
-    @Override
-    public List<TaskDto> getAll(final String projectId, final AppUser authUser) {
-        final Project project = projectService.getOrTrow(projectId);
-        boolean userInProject = collaboratorService.isUserInProject(authUser, project);
-        if (!userInProject) {
-            throw new RestApiException(HttpStatus.FORBIDDEN, "User has no access to this project");
+            return mappingService.mapEntityToDto(repository.save(entity));
         }
-        return repository
-                .findByProject(project)
-                .stream()
-                .map(mappingService::mapEntityToDto)
-                .toList();
-    }
 
-    @Override
-    public void delete(final String id, final AppUser changer) {
-        final Task existedTask = getOrThrow(id);
-        final boolean hasPermission = collaboratorService.hasUserPermission(
-                changer,
-                existedTask.getProject(),
-                List.of(ProjectRoles.MEMBER, ProjectRoles.OWNER, ProjectRoles.ADMIN)
-        );
-        if (!hasPermission) {
-            throw new RestApiException(HttpStatus.FORBIDDEN, "User has no access to this project");
-        }
-        repository.delete(existedTask);
-    }
+        @Override
+            public TaskDto getById(final String id, final AppUser requester) {
+                final Task task = getOrThrow(id);
+                enforceProjectAccess(task.getProject(), requester);
+                return mappingService.mapEntityToDto(task);
+            }
 
-    @Override
-    public TaskDto updateTask(String id, TaskUpdateRequestDto updateDto) {
-        UUID uuid = UUID.fromString(id);
+            @Override
+            public Task getOrThrow(String id) {
+                return findById(id)
+                        .orElseThrow(TaskNotFoundException::new);
+            }
 
-        Task task = repository.findById(uuid)
-                .orElseThrow(TaskNotFoundException::new);
+            @Override
+            public Optional<Task> findById(String id) {
+                final UUID taskId = parseUuid(id, TaskValidationConstats.TASK_ID_INVALID_MESSAGE);
+                return repository
+                .findById(taskId);
+            }
 
-        task.setTitle(updateDto.title());
-        task.setDescription(updateDto.description());
+            @Override
+            public List<TaskDto> getAll(final String projectId, final AppUser authUser) {
+                final Project project = getProjectOrThrow(projectId);
+                enforceProjectAccess(project, authUser);
+                return repository
+                        .findByProject(project)
+                        .stream()
+                        .map(mappingService::mapEntityToDto)
+                        .toList();
+            }
 
-        repository.save(task);
-        return taskMappingService.mapEntityToDto(task);
-    }
+            @Override
+            public void delete(final String id, final AppUser changer) {
+                final Task existedTask = getOrThrow(id);
+                enforceTaskManagementPermission(existedTask.getProject(), changer);
+                repository.delete(existedTask);
+            }
 
-}
+            @Override
+            public TaskDto updateTask(final String id, final TaskUpdateRequestDto updateDto, final AppUser changer) {
+                final Task task = getOrThrow(id);
+                enforceTaskManagementPermission(task.getProject(), changer);
+
+                if (updateDto.title() != null && !updateDto.title().isBlank()) {
+                    task.setTitle(updateDto.title());
+                }
+
+                if (updateDto.description() != null && !updateDto.description().isBlank()) {
+                    task.setDescription(updateDto.description());
+                }
+
+                final Task updated = repository.save(task);
+                return mappingService.mapEntityToDto(updated);
+            }
+
+            private void enforceProjectAccess(final Project project, final AppUser user) {
+                if (isProjectOwner(project, user)) {
+                    return;
+                }
+
+                final boolean userInProject = collaboratorService.isUserInProject(user, project);
+                if (!userInProject) {
+                    throw new RestApiException(HttpStatus.FORBIDDEN, "User has no access to this project");
+                }
+            }
+
+            private void enforceTaskManagementPermission(final Project project, final AppUser user) {
+                if (isProjectOwner(project, user)) {
+                    return;
+                }
+
+                final boolean hasPermission = collaboratorService.hasUserPermission(
+                        user,
+                        project,
+                        List.of(ProjectRoles.MEMBER, ProjectRoles.OWNER, ProjectRoles.ADMIN)
+                );
+                if (!hasPermission) {
+                    throw new RestApiException(HttpStatus.FORBIDDEN, "User has no access to this project");
+                }
+            }
+
+                private boolean isProjectOwner(final Project project, final AppUser user) {
+                    return project.getOwner() != null && project.getOwner().equals(user);
+                }
+
+                private Project getProjectOrThrow(final String projectId) {
+                    try {
+                        return projectService.getOrTrow(projectId);
+                    } catch (IllegalArgumentException ex) {
+                        throw new RestApiException(HttpStatus.BAD_REQUEST, TaskValidationConstats.PROJECT_ID_INVALID_MESSAGE);
+                    }
+                }
+
+                private UUID parseUuid(final String rawId, final String errorMessage) {
+                    try {
+                        return UUID.fromString(rawId);
+                    } catch (IllegalArgumentException ex) {
+                        throw new RestApiException(HttpStatus.BAD_REQUEST, errorMessage);
+                    }
+                }
+            }

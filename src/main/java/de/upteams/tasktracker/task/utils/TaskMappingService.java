@@ -22,7 +22,7 @@ public interface TaskMappingService {
     @Mapping(target = "executors", ignore = true)
     TaskDto mapEntityToDto(Task entity);
 
-    @Mapping(target = "project", ignore = true)
-    @Mapping(target = "executors", ignore = true)
-    Task mapDtoToEntity(TaskDto dto);
+//    @Mapping(target = "project", ignore = true)
+//    @Mapping(target = "executors", ignore = true)
+//    Task mapDtoToEntity(TaskDto dto);
 }

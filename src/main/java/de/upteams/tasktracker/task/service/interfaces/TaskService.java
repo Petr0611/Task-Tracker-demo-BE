@@ -1,5 +1,6 @@
 package de.upteams.tasktracker.task.service.interfaces;
 
+import de.upteams.tasktracker.task.dto.TaskCreateRequestDto;
 import de.upteams.tasktracker.task.dto.TaskDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.entity.Task;
@@ -13,9 +14,9 @@ import java.util.Optional;
  */
 public interface TaskService {
 
-    TaskDto save(TaskDto newTaskDto);
+    TaskDto save(TaskCreateRequestDto newTaskDto, AppUser creator);
 
-    TaskDto getById(String id);
+    TaskDto getById(String id, AppUser requester);
 
     Task getOrThrow(String id);
 
@@ -25,6 +26,6 @@ public interface TaskService {
 
     void delete(String id, AppUser changer);
 
-    TaskDto updateTask(String id, TaskUpdateRequestDto updateDto);
+    TaskDto updateTask(String id, TaskUpdateRequestDto updateDto, AppUser changer);
 
 }
