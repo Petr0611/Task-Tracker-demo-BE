@@ -1,5 +1,6 @@
 package de.upteams.tasktracker.project.controller;
 
+import de.upteams.tasktracker.collaborator.dto.UpdateCollaboratorRolesDto;
 import de.upteams.tasktracker.invitation.dto.ProjectInvitationResponseDto;
 import de.upteams.tasktracker.project.controller.api.ProjectApi;
 import de.upteams.tasktracker.project.dto.request.ProjectCollaboratorAddRequestDto;
@@ -63,5 +64,13 @@ public class ProjectController implements ProjectApi {
         ProjectInvitationResponseDto responseDto = service.inviteUserToProject(id, requestDto, principal.user());
         HttpStatus status = responseDto.registeredUser() ? HttpStatus.OK : HttpStatus.ACCEPTED;
         return ResponseEntity.status(status).body(responseDto);
+    }
+
+    @Override
+    public void updateCollaboratorRoles(String projectId,
+                                        String userId,
+                                        UpdateCollaboratorRolesDto dto,
+                                        AuthUserDetails principal) {
+        service.updateUserRolesInProject(projectId, userId, dto, principal.user());
     }
 }
