@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -51,6 +52,73 @@ public interface UserApiSwaggerDoc {
             )
     })
     List<UserResponseDto> getAll();
+
+    @Operation(
+            summary = "Returns dto of current user",
+            description = "Returns UserResponseDto of currently authenticated user."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Successfully retrieved current user",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UserResponseDto.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized – user is not authenticated"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            )
+    })
+    UserResponseDto getCurrentUser(Authentication authentication);
+
+    @Operation(
+            summary = "Returns user by its ID ",
+            description = "Allows admins to get any user's profile by specifying their unique ID."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UserResponseDto.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request payload",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Access denied",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            )
+    })
+    UserResponseDto getById(
+            @Parameter(
+                    description = "Unique ID of user (UUID format).",
+                    required = true,
+                    example = "c3a39ef0-12a9-4a02-8235-947e6cf25b17"
+            )
+            String id);
 
     @Operation(
             summary = "Update current user profile",
@@ -94,6 +162,7 @@ public interface UserApiSwaggerDoc {
             )
     })
     UserResponseDto updateUser(UserUpdateDto dto);
+
     @Operation(
             summary = "Update user by ID (admin only)",
             description = "Allows admins to update any user's profile by specifying their unique ID."

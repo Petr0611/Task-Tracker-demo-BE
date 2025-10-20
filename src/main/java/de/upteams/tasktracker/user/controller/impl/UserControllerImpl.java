@@ -7,6 +7,7 @@ import de.upteams.tasktracker.user.entity.AppUser;
 import de.upteams.tasktracker.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,6 +26,23 @@ public class UserControllerImpl implements UserApi {
     @Override
     public List<UserResponseDto> getAll() {
         return service.getAll();
+    }
+
+    /**
+     * Returns the current authenticated user
+     */
+    @Override
+    public UserResponseDto getCurrentUser(Authentication authentication) {
+        AppUser user = service.getByEmailOrThrow(authentication.getName());
+        return mapToDto(user);
+    }
+
+    /**
+     * Returns the user by id
+     */
+    @Override
+    public UserResponseDto getById(String id) {
+        return mapToDto(service.getByIdOrThrow(id));
     }
 
     /**
