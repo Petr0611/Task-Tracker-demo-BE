@@ -8,6 +8,7 @@ import de.upteams.tasktracker.user.entity.AppUser;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 public interface CollaboratorService {
 
@@ -18,6 +19,8 @@ public interface CollaboratorService {
     boolean hasUserPermission(AppUser user, Project project, ProjectRoles requiredRole);
 
     boolean hasUserPermission(AppUser user, Project project, Collection<ProjectRoles> requiredRoles);
+
+    boolean hasUserPermission(AppUser user, UUID projectId, Collection<ProjectRoles> requiredRoles);
 
     Collaborator addCollaborator(AppUser user, Project project, Set<ProjectRoles> roles);
 
