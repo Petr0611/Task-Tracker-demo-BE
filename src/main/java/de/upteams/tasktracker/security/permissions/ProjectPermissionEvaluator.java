@@ -3,6 +3,8 @@ package de.upteams.tasktracker.security.permissions;
 
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
+import de.upteams.tasktracker.security.exception.UnexpectedPrincipalTypeException;
+import de.upteams.tasktracker.security.service.AuthUserDetails;
 import de.upteams.tasktracker.user.entity.AppUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -18,7 +20,7 @@ public class ProjectPermissionEvaluator {
     private final CollaboratorService collaboratorService;
 
     public boolean isOwner(String projectId, Authentication authentication) {
-        AppUser currentUser = (AppUser) authentication.getPrincipal();
+        AppUser currentUser = extractUser(authentication);
         return collaboratorService.hasUserPermission(
                 currentUser,
                 UUID.fromString(projectId),
@@ -27,11 +29,24 @@ public class ProjectPermissionEvaluator {
     }
 
     public boolean hasAnyRole(String projectId, Authentication authentication, List<ProjectRoles> roles) {
-        AppUser currentUser = (AppUser) authentication.getPrincipal();
+        AppUser currentUser = extractUser(authentication);
         return collaboratorService.hasUserPermission(
                 currentUser,
                 UUID.fromString(projectId),
                 roles
         );
+    }
+
+    private AppUser extractUser(Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new UnexpectedPrincipalTypeException(null);
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof AuthUserDetails userDetails) {
+            return userDetails.getUser();
+        } else if (principal instanceof AppUser appUser) {
+            return appUser;
+        }
+        throw new UnexpectedPrincipalTypeException(principal);
     }
 }

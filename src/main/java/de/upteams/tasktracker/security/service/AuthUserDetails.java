@@ -40,4 +40,8 @@ public record AuthUserDetails(AppUser user) implements UserDetails {
         var confirmationStatus = user.getConfirmationStatus();
         return ConfirmationStatus.CONFIRMED.equals(confirmationStatus);
     }
+
+    public AppUser getUser() {
+        return user;
+    }
 }
