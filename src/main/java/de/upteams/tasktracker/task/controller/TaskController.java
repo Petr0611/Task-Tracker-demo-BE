@@ -2,30 +2,33 @@ package de.upteams.tasktracker.task.controller;
 
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import de.upteams.tasktracker.task.controller.api.TaskApi;
+import de.upteams.tasktracker.task.dto.TaskCreateRequestDto;
 import de.upteams.tasktracker.task.dto.TaskDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.service.interfaces.TaskService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Validated
 public class TaskController implements TaskApi {
 
     /**
      * Service for various operations with Tasks
      */
     private final TaskService service;
-    private final TaskService taskService;
 
     @Override
     public TaskDto save(
-            TaskDto task,
+            @Valid TaskCreateRequestDto task,
             AuthUserDetails principal
     ) {
-        return service.save(task);
+        return service.save(task, principal.user());
     }
 
     @Override
@@ -33,7 +36,7 @@ public class TaskController implements TaskApi {
             String id,
             AuthUserDetails principal
     ) {
-        return service.getById(id);
+        return service.getById(id, principal.user());
     }
 
     @Override
@@ -53,7 +56,7 @@ public class TaskController implements TaskApi {
     }
 
     @Override
-    public TaskDto update(String id, TaskUpdateRequestDto updateDto, AuthUserDetails principal) {
-        return taskService.updateTask(id, updateDto);
+        public TaskDto update(String id, @Valid TaskUpdateRequestDto updateDto, AuthUserDetails principal) {
+            return service.updateTask(id, updateDto, principal.user());
+        }
     }
-}

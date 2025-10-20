@@ -3,6 +3,8 @@ package de.upteams.tasktracker.task.controller.api;
 import de.upteams.tasktracker.exception.handling.response.ErrorResponseDto;
 import de.upteams.tasktracker.exception.handling.response.ValidationErrorDto;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
+import de.upteams.tasktracker.task.constants.TaskValidationConstats;
+import de.upteams.tasktracker.task.dto.TaskCreateRequestDto;
 import de.upteams.tasktracker.task.dto.TaskDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,9 +16,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.List;
 
@@ -64,9 +69,15 @@ public interface TaskApi {
             )
     })
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     TaskDto save(
-            @RequestBody
-            TaskDto task,
+            @org.springframework.web.bind.annotation.RequestBody
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Payload for creating a new Task"
+            )
+            @Valid
+            TaskCreateRequestDto task,
 
             @AuthenticationPrincipal
             @Parameter(hidden = true)
@@ -96,6 +107,11 @@ public interface TaskApi {
     @GetMapping("/{id}")
     TaskDto getById(
             @PathVariable
+            @Parameter(
+                    description = "Unique identifier of the Task",
+                    required = true,
+                    schema = @Schema(pattern = TaskValidationConstats.UUID_PATTERN)
+            )
             String id,
 
             @AuthenticationPrincipal
@@ -117,6 +133,11 @@ public interface TaskApi {
     @GetMapping("/project/{projectId}")
     List<TaskDto> getAll(
             @PathVariable
+            @Parameter(
+                    description = "Unique identifier of the Project",
+                    required = true,
+                    schema = @Schema(pattern = TaskValidationConstats.UUID_PATTERN)
+            )
             String projectId,
 
             @AuthenticationPrincipal
@@ -136,8 +157,14 @@ public interface TaskApi {
                             schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     void deleteById(
             @PathVariable
+            @Parameter(
+                    description = "Unique identifier of the Task",
+                    required = true,
+                    schema = @Schema(pattern = TaskValidationConstats.UUID_PATTERN)
+            )
             String id,
 
             @AuthenticationPrincipal
@@ -161,10 +188,20 @@ public interface TaskApi {
     @PutMapping("/{id}")
     TaskDto update(
             @PathVariable
+            @Parameter(
+                    description = "Unique identifier of the Task",
+                    required = true,
+                    schema = @Schema(pattern = TaskValidationConstats.UUID_PATTERN)
+            )
             String id,
 
-            @RequestBody
+            @org.springframework.web.bind.annotation.RequestBody
             @Parameter(description = "Updated task data", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Partial Task data to update"
+            )
+            @Valid
             TaskUpdateRequestDto updateDto,
 
             @AuthenticationPrincipal
