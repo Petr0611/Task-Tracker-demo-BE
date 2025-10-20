@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param title       Project title
  * @param description Project description
  * @param owner       Author of the Project
+ * @param ownerAssigned  Indicates whether the creator has been assigned as OWNER
  */
 @Schema(description = "Data Transfer Object for Project entity")
 public record ProjectResponseDto(
@@ -35,6 +36,13 @@ public record ProjectResponseDto(
         @Schema(
                 description = "The User who created the Project",
                 accessMode = Schema.AccessMode.READ_ONLY)
-        EmployeeDto owner) {
+        EmployeeDto owner,
+
+        @Schema(
+                description = "Flag that shows if the creator was automatically assigned as OWNER",
+                example = "true"
+        )
+        boolean ownerAssigned
+        ) {
 
 }
