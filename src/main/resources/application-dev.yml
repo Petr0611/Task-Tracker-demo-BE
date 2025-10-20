@@ -42,6 +42,7 @@ confirmation:
 
 app:
   base-url: ${BASE_URL:http://localhost:8080}
+  frontend-url: ${FRONTEND_BASE_URL:${BASE_URL}}
 
 digitalocean:
   spaces:

@@ -35,6 +35,14 @@ public class EmailService {
         emailSender.sendEmail(sentTo, "Confirm your registration", htmlContent);
     }
 
+    public void sendPasswordResetEmail(String email, String token) {
+        String resetLink = "%s/reset-password?token=%s"
+                .formatted(frontendBaseUrl.replaceAll("/+$", ""), token);
+        String subject = "Password Reset Request";
+        String body = "Click the link to reset your password: " + resetLink;
+        emailSender.sendEmail(email, subject, body);
+    }
+
     @Async
     public void sendProjectInvitationForNewUser(String sentTo, String projectName, String inviteToken) {
         String registerLink = buildFrontendLink("/confirm-invite", inviteToken);
