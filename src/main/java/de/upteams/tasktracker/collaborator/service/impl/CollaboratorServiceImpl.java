@@ -12,10 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +40,14 @@ public class CollaboratorServiceImpl implements CollaboratorService {
     public boolean hasUserPermission(AppUser user, Project project, Collection<ProjectRoles> requiredRoles) {
         return getCollaborator(user, project)
                 .map(collaborator -> hasAnyRequiredRole(collaborator, requiredRoles))
+                .orElse(false);
+    }
+
+    @Override
+    public boolean hasUserPermission(AppUser user, UUID projectId, Collection<ProjectRoles> requiredRoles) {
+        return collaboratorRepository.findByAppUserIdAndProjectId(user.getId(), projectId)
+                .map(collaborator -> collaborator.getProjectRolesSet().stream()
+                        .anyMatch(requiredRoles::contains))
                 .orElse(false);
     }
 
