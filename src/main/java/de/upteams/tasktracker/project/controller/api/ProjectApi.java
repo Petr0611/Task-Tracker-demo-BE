@@ -1,5 +1,6 @@
 package de.upteams.tasktracker.project.controller.api;
 
+import de.upteams.tasktracker.collaborator.dto.UpdateCollaboratorRolesDto;
 import de.upteams.tasktracker.exception.handling.response.ErrorResponseDto;
 import de.upteams.tasktracker.exception.handling.response.ValidationErrorDto;
 import de.upteams.tasktracker.invitation.dto.ProjectInvitationResponseDto;
@@ -65,6 +66,7 @@ public interface ProjectApi {
             )
     })
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     ProjectResponseDto save(
             @RequestBody
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -99,6 +101,7 @@ public interface ProjectApi {
                                     """)))
     })
     @GetMapping("/{id}")
+    @PreAuthorize("@permissionEvaluator.hasAnyRole(#id, authentication, T(java.util.List).of(T(de.upteams.tasktracker.collaborator.entity.ProjectRoles).VIEWER, T(de.upteams.tasktracker.collaborator.entity.ProjectRoles).ADMIN, T(de.upteams.tasktracker.collaborator.entity.ProjectRoles).OWNER))")
     ProjectResponseDto getById(
             @PathVariable
             @Parameter(required = true, description = "Project ID to search")
@@ -112,6 +115,7 @@ public interface ProjectApi {
                             array = @ArraySchema(schema = @Schema(implementation = ProjectResponseDto.class))))
     })
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     List<ProjectResponseDto> getAll();
 
     @Operation(summary = "Delete Project", description = "Delete Project from the Database by its ID")
@@ -131,6 +135,7 @@ public interface ProjectApi {
                                     """)))
     })
     @DeleteMapping("/{id}")
+    @PreAuthorize("@permissionEvaluator.isOwner(#id, authentication)")
     void deleteById(
             @PathVariable
             @Parameter(required = true, description = "Project ID to delete")
@@ -150,6 +155,7 @@ public interface ProjectApi {
                             array = @ArraySchema(schema = @Schema(implementation = ValidationErrorDto.class))))
     })
     @PutMapping("/{id}")
+    @PreAuthorize("@permissionEvaluator.hasAnyRole(#id, authentication, T(java.util.List).of(T(de.upteams.tasktracker.collaborator.entity.ProjectRoles).OWNER, T(de.upteams.tasktracker.collaborator.entity.ProjectRoles).ADMIN))")
     ProjectResponseDto update(
             @PathVariable
             @Parameter(required = true, description = "Project ID to update")
@@ -182,6 +188,7 @@ public interface ProjectApi {
     })
     @PostMapping("/{id}/collaborators")
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("@permissionEvaluator.hasAnyRole(#id, authentication, T(java.util.List).of(T(de.upteams.tasktracker.collaborator.entity.ProjectRoles).OWNER, T(de.upteams.tasktracker.collaborator.entity.ProjectRoles).ADMIN))")
     void addUserToProject(
             @PathVariable
             @Parameter(required = true, description = "Project ID to update")
@@ -219,6 +226,7 @@ public interface ProjectApi {
                             schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @PostMapping("/{id}/invitations")
+    @PreAuthorize("@permissionEvaluator.hasAnyRole(#id, authentication, T(java.util.List).of(T(de.upteams.tasktracker.collaborator.entity.ProjectRoles).OWNER, T(de.upteams.tasktracker.collaborator.entity.ProjectRoles).ADMIN))")
     ResponseEntity<ProjectInvitationResponseDto> inviteUserToProject(
             @PathVariable
             @Parameter(required = true, description = "Project ID to invite to")
@@ -235,6 +243,26 @@ public interface ProjectApi {
             @AuthenticationPrincipal
             @Parameter(hidden = true)
             AuthUserDetails principal
+    );
+
+    @Operation(
+            summary = "Update collaborator roles",
+            description = "Allows OWNER or ADMIN to change roles of an existing project collaborator."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Roles updated successfully"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — only OWNER or ADMIN can update roles",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "Project or collaborator not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @PutMapping("/{projectId}/collaborators/{userId}/roles")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void updateCollaboratorRoles(
+            @PathVariable String projectId,
+            @PathVariable String userId,
+            @RequestBody @Valid UpdateCollaboratorRolesDto dto,
+            @AuthenticationPrincipal @Parameter(hidden = true) AuthUserDetails principal
     );
 
 }

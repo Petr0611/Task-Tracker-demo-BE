@@ -93,7 +93,12 @@ public class SecurityConfig {
 
 
                         // временно разрешаем создание проекта без авторизации
-                        .requestMatchers(HttpMethod.POST, "/api/v1/projects").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/projects").authenticated()
+
+                        // reset пароля
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password-request").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password").permitAll()
+
 
 
                         .anyRequest().authenticated()

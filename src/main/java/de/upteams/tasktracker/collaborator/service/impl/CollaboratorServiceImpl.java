@@ -4,6 +4,7 @@ import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.collaborator.entity.CollaboratorStatus;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.collaborator.exception.CollaboratorAlreadyExistsException;
+import de.upteams.tasktracker.collaborator.exception.CollaboratorNotFoundException;
 import de.upteams.tasktracker.collaborator.persistence.CollaboratorRepository;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
 import de.upteams.tasktracker.project.entity.Project;
@@ -12,10 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +45,14 @@ public class CollaboratorServiceImpl implements CollaboratorService {
     }
 
     @Override
+    public boolean hasUserPermission(AppUser user, UUID projectId, Collection<ProjectRoles> requiredRoles) {
+        return collaboratorRepository.findByAppUserIdAndProjectId(user.getId(), projectId)
+                .map(collaborator -> collaborator.getProjectRolesSet().stream()
+                        .anyMatch(requiredRoles::contains))
+                .orElse(false);
+    }
+
+    @Override
     public Collaborator addCollaborator(AppUser user, Project project, Set<ProjectRoles> roles) {
         collaboratorRepository.findCollaborator(user, project)
                 .ifPresent(existing -> {
@@ -72,6 +78,16 @@ public class CollaboratorServiceImpl implements CollaboratorService {
         Collaborator savedCollaborator = collaboratorRepository.save(collaborator);
         project.getProjectTeam().add(savedCollaborator);
         return savedCollaborator;
+    }
+
+    @Override
+    public Collaborator updateCollaboratorRoles(AppUser user, Project project, Set<ProjectRoles> roles) {
+        Collaborator collaborator = collaboratorRepository.findCollaborator(user, project)
+                .orElseThrow(CollaboratorNotFoundException::new);
+
+        collaborator.getProjectRolesSet().clear();
+        collaborator.getProjectRolesSet().addAll(roles);
+        return collaboratorRepository.save(collaborator);
     }
 
     private boolean hasAnyRequiredRole(Collaborator collaborator, Collection<ProjectRoles> requiredRoles) {

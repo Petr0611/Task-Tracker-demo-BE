@@ -1,6 +1,7 @@
 package de.upteams.tasktracker.project.service.impl;
 
 import de.upteams.tasktracker.collaborator.entity.Collaborator;
+import de.upteams.tasktracker.collaborator.dto.UpdateCollaboratorRolesDto;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
@@ -133,6 +134,19 @@ public class ProjectServiceImpl implements ProjectService {
                 creationResult.invitation().getStatus(),
                 creationResult.registeredUser()
         );
+    }
+
+    @Override
+    public void updateUserRolesInProject(String projectId,
+                                         String userId,
+                                         UpdateCollaboratorRolesDto dto,
+                                         AppUser initiator) {
+        Project project = getOrTrow(projectId);
+        enforceTeamManagementPermission(project, initiator);
+
+        AppUser userToUpdate = userService.getByIdOrThrow(userId);
+        Set<ProjectRoles> newRoles = EnumSet.copyOf(dto.newRoles());
+        collaboratorService.updateCollaboratorRoles(userToUpdate, project, newRoles);
     }
 
     private void enforceTeamManagementPermission(Project project, AppUser initiator) {
