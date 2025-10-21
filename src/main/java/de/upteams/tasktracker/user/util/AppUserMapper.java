@@ -1,8 +1,10 @@
 package de.upteams.tasktracker.user.util;
 
+import de.upteams.tasktracker.user.dto.EmployeeDto;
 import de.upteams.tasktracker.user.dto.response.UserResponseDto;
 import de.upteams.tasktracker.user.entity.AppUser;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
 /**
@@ -15,4 +17,12 @@ import org.mapstruct.MappingConstants;
 public interface AppUserMapper {
 
     UserResponseDto mapEntityToDto(AppUser entity);
+
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "bio", ignore = true)
+    @Mapping(target = "department", ignore = true)
+    @Mapping(target = "position", ignore = true)
+    @Mapping(target = "avatar", ignore = true)
+    EmployeeDto mapEntityToEmployeeDto(AppUser entity);
 }

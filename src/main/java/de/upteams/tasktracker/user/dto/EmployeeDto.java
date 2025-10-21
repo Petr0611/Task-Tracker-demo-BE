@@ -1,5 +1,7 @@
 package de.upteams.tasktracker.user.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -16,6 +18,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param roles    Roles of the Employee for authorization process
  */
 @Schema(description = "Data Transfer Object for Employee entity")
+@JsonInclude(JsonInclude.Include.NON_NULL)
+
 public record EmployeeDto(
         @Schema(
                 description = "Unique identifier of the Employee",
@@ -34,6 +38,7 @@ public record EmployeeDto(
                 description = "Employee's password (will be hidden in responses)",
                 example = "HomerTheBest123"
         )
+        @JsonIgnore
         String password,
 
         @Schema(
@@ -70,5 +75,6 @@ public record EmployeeDto(
                 description = "List of Roles granted to this Employee",
                 accessMode = Schema.AccessMode.READ_ONLY
         )
+        @JsonIgnore
         RoleDto roles) {
 }
