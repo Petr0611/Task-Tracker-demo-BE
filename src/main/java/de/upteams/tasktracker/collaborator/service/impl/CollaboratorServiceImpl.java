@@ -7,6 +7,7 @@ import de.upteams.tasktracker.collaborator.exception.CollaboratorAlreadyExistsEx
 import de.upteams.tasktracker.collaborator.exception.CollaboratorNotFoundException;
 import de.upteams.tasktracker.collaborator.persistence.CollaboratorRepository;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
+import de.upteams.tasktracker.exception.handling.exceptions.common.OwnerAlreadyExistsException;
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.user.entity.AppUser;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +55,15 @@ public class CollaboratorServiceImpl implements CollaboratorService {
 
     @Override
     public Collaborator addCollaborator(AppUser user, Project project, Set<ProjectRoles> roles) {
+        if (roles.contains(ProjectRoles.OWNER)) {
+            boolean hasOwner = collaboratorRepository.existsByProjectAndRole(project, ProjectRoles.OWNER);
+            if (!hasOwner) {
+                throw new OwnerAlreadyExistsException(
+                        "Project already has an OWNER. Only one OWNER is allowed per project."
+                );
+            }
+        }
+
         collaboratorRepository.findCollaborator(user, project)
                 .ifPresent(existing -> {
                     throw new CollaboratorAlreadyExistsException();
@@ -82,6 +92,20 @@ public class CollaboratorServiceImpl implements CollaboratorService {
 
     @Override
     public Collaborator updateCollaboratorRoles(AppUser user, Project project, Set<ProjectRoles> roles) {
+
+        if (roles.contains(ProjectRoles.OWNER)) {
+            boolean hasAnotherOwner = collaboratorRepository.existsByProjectAndRole(project, ProjectRoles.OWNER);
+
+            Collaborator currentCollaborator = collaboratorRepository.findCollaborator(user, project)
+                    .orElseThrow(CollaboratorNotFoundException::new);
+
+            boolean isAlreadyOwner = currentCollaborator.getProjectRolesSet().contains(ProjectRoles.OWNER);
+
+            if (hasAnotherOwner && !isAlreadyOwner) {
+                throw new OwnerAlreadyExistsException("Project already has an OWNER. Only one OWNER is allowed per project.");
+            }
+        }
+
         Collaborator collaborator = collaboratorRepository.findCollaborator(user, project)
                 .orElseThrow(CollaboratorNotFoundException::new);
 
