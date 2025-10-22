@@ -63,14 +63,22 @@ public interface TaskApi {
                                       "status": 403,
                                       "error": "Forbidden",
                                       "message": "User has no access to this project",
-                                      "path": "/api/v1/tasks"
+                                      "path": "/api/v1/tasks/project/{projectId}"
                                     }
                                     """))
             )
     })
-    @PostMapping
+    @PostMapping("/project/{projectId}")
     @ResponseStatus(HttpStatus.CREATED)
     TaskDto save(
+            @PathVariable
+            @Parameter(
+                    description = "Unique identifier of the Project",
+                    required = true,
+                    schema = @Schema(pattern = TaskValidationConstats.UUID_PATTERN)
+            )
+            String projectId,
+
             @org.springframework.web.bind.annotation.RequestBody
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,

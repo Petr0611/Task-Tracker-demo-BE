@@ -14,7 +14,7 @@ import java.util.Optional;
  */
 public interface TaskService {
 
-    TaskDto save(TaskCreateRequestDto newTaskDto, AppUser creator);
+    TaskDto save(String projectId, TaskCreateRequestDto newTaskDto, AppUser creator);
 
     TaskDto getById(String id, AppUser requester);
 
