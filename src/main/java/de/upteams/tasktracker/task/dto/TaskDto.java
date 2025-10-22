@@ -40,6 +40,12 @@ public class TaskDto {
     ProjectResponseDto project;
 
     @Schema(
+            description = "Identifier of the Project this Task belongs to",
+            example = "c7243236-8537-4421-bbe0-2744e37032e3"
+    )
+    String projectId;
+
+    @Schema(
             description = "List of Users assigned to this Task",
             accessMode = Schema.AccessMode.READ_ONLY
     )
