@@ -23,7 +23,6 @@ import java.util.UUID;
 public interface ProjectMapper {
 
     @Mapping(source = "owner", target = "owner")
-    @Mapping(target = "id", qualifiedByName = "uuidToString")
     ProjectResponseDto mapEntityToDto(Project entity);
 
     @Mapping(target = "id", ignore = true)

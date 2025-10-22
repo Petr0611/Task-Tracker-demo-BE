@@ -1,5 +1,6 @@
 package de.upteams.tasktracker.project.service.impl;
 
+import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.collaborator.dto.UpdateCollaboratorRolesDto;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
@@ -44,7 +45,22 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectResponseDto save(ProjectCreateDto newProjectDto, AppUser projectOwner) {
         Project project = mappingService.mapDtoToEntity(newProjectDto);
         project.setOwner(projectOwner);
-        return mappingService.mapEntityToDto(repository.save(project));
+        Project savedProject = repository.save(project);
+
+        collaboratorService.addCollaborator(
+                projectOwner,
+                savedProject,
+                Set.of(ProjectRoles.OWNER)
+        );
+
+        ProjectResponseDto baseDto = mappingService.mapEntityToDto(savedProject);
+        return new ProjectResponseDto(
+                baseDto.id(),
+                baseDto.title(),
+                baseDto.description(),
+                baseDto.owner(),
+                true
+        );
     }
 
     @Override
