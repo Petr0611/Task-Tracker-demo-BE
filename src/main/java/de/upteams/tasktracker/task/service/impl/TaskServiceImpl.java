@@ -36,8 +36,8 @@ public class TaskServiceImpl implements TaskService {
     private final CollaboratorService collaboratorService;
 
     @Override
-        public TaskDto save(final TaskCreateRequestDto newTaskDto, final AppUser creator) {
-            final Project project = getProjectOrThrow(newTaskDto.projectId());
+    public TaskDto save(final String projectId, final TaskCreateRequestDto newTaskDto, final AppUser creator) {
+        final Project project = getProjectOrThrow(projectId);
             enforceProjectAccess(project, creator);
 
             final Task entity = new Task();

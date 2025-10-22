@@ -25,10 +25,11 @@ public class TaskController implements TaskApi {
 
     @Override
     public TaskDto save(
+            String projectId,
             @Valid TaskCreateRequestDto task,
             AuthUserDetails principal
     ) {
-        return service.save(task, principal.user());
+        return service.save(projectId, task, principal.user());
     }
 
     @Override

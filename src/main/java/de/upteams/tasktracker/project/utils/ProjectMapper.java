@@ -8,6 +8,9 @@ import de.upteams.tasktracker.user.util.AppUserMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+import org.mapstruct.Named;
+
+import java.util.UUID;
 
 /**
  * Interface for Project Mapping Service.
@@ -26,4 +29,9 @@ public interface ProjectMapper {
     @Mapping(target = "tasks", ignore = true)
     @Mapping(target = "projectTeam", ignore = true)
     Project mapDtoToEntity(ProjectCreateDto dto);
+
+    @Named("uuidToString")
+    default String mapId(UUID id) {
+        return id == null ? null : id.toString();
+    }
 }
