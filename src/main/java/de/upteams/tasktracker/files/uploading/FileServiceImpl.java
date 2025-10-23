@@ -1,11 +1,14 @@
 package de.upteams.tasktracker.files.uploading;
 
 import de.upteams.tasktracker.configuration.AwsS3Configuration;
+import de.upteams.tasktracker.user.entity.AppUser;
+import de.upteams.tasktracker.user.service.UserService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
@@ -50,6 +53,7 @@ public class FileServiceImpl implements FileService {
     private final S3AsyncClient s3Client;
     private final AwsS3Configuration config;
     private final ExecutorService executorService;
+    private final UserService userService;
 
     /**
      * Asynchronously uploads a file input stream to the configured bucket.
@@ -60,7 +64,7 @@ public class FileServiceImpl implements FileService {
      * @param contentType   optional MIME type (e.g. "image/png"); may be null or blank
      * @param contentLength exact file size in bytes; must be > 0
      * @param isPublicRead  if true, the object will have PUBLIC_READ ACL, otherwise PRIVATE
-     * @return CompletableFuture<Boolean> resolving to true if upload succeeds, false otherwise
+     * @return CompletableFuture<Boolean> resolving to true if uploadAvatar succeeds, false otherwise
      * @throws IllegalArgumentException if objectKey is null/blank or contentLength is null/≤0
      */
     @Async
@@ -98,19 +102,19 @@ public class FileServiceImpl implements FileService {
         final PutObjectRequest request = builder.build();
         final AsyncRequestBody requestBody = AsyncRequestBody.fromInputStream(inputStream, contentLength, executorService);
 
-        log.debug("Starting async upload of '{}' to bucket '{}' ({} bytes)", objectKey, config.getBucketName(), contentLength);
+        log.debug("Starting async uploadAvatar of '{}' to bucket '{}' ({} bytes)", objectKey, config.getBucketName(), contentLength);
 
         return s3Client.putObject(request, requestBody)
                 .thenApply(response -> {
-                    log.debug("Async upload succeeded for '{}'", objectKey);
+                    log.debug("Async uploadAvatar succeeded for '{}'", objectKey);
                     return true;
                 })
                 .exceptionally(ex -> {
                     Throwable cause = ex.getCause();
                     if (cause instanceof S3Exception) {
-                        log.error("S3 async upload failed for '{}': {}", objectKey, cause.getMessage(), cause);
+                        log.error("S3 async uploadAvatar failed for '{}': {}", objectKey, cause.getMessage(), cause);
                     } else {
-                        log.warn("Async upload exception for '{}': {}", objectKey, ex.getMessage(), ex);
+                        log.warn("Async uploadAvatar exception for '{}': {}", objectKey, ex.getMessage(), ex);
                     }
                     return false;
                 })
@@ -121,5 +125,39 @@ public class FileServiceImpl implements FileService {
                         log.warn("Failed to close stream for '{}': {}", objectKey, e.getMessage(), e);
                     }
                 });
+    }
+
+    @Override
+    public String uploadAvatar(MultipartFile file, String userId) {
+        try {
+            AppUser user = userService.getByIdOrThrow(userId);
+            String key = String.format("avatars/%s_%s", userId, file.getOriginalFilename());
+            InputStream inputStream = file.getInputStream();
+            long size = file.getSize();
+            CompletableFuture<Boolean> future = uploadFileAsync(
+                    key,
+                    inputStream,
+                    Map.of("uploadedBy", userId),
+                    file.getContentType(),
+                    size,
+                    true
+            );
+            boolean success = future.join();
+            if (!success) {
+                throw new RuntimeException("Upload failed for " + key);
+            }
+            String publicUrl = String.format("%s/%s/%s", config.getEndpoint(), config.getBucketName(), key);
+
+
+            user.setAvatarUrl(publicUrl);
+            userService.saveOrUpdate(user);
+
+            log.info("Uploaded '{}' to '{}'", key, publicUrl);
+            return publicUrl;
+
+        } catch (Exception e) {
+            log.error("Error uploading avatar for user {}: {}", userId, e.getMessage(), e);
+            throw new RuntimeException("Avatar uploadAvatar failed", e);
+        }
     }
 }
