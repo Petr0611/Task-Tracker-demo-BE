@@ -49,6 +49,11 @@ public class TaskController implements TaskApi {
     }
 
     @Override
+    public List<TaskDto> getAllByColumn(String columnId, AuthUserDetails principal) {
+        return service.getAllByColumn(columnId, principal.user());
+    }
+
+    @Override
     public void deleteById(
             String id,
             AuthUserDetails principal
@@ -57,7 +62,7 @@ public class TaskController implements TaskApi {
     }
 
     @Override
-        public TaskDto update(String id, @Valid TaskUpdateRequestDto updateDto, AuthUserDetails principal) {
-            return service.updateTask(id, updateDto, principal.user());
-        }
+    public TaskDto update(String id, @Valid TaskUpdateRequestDto updateDto, AuthUserDetails principal) {
+        return service.updateTask(id, updateDto, principal.user());
     }
+}

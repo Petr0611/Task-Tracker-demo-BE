@@ -32,6 +32,19 @@ public class TaskDto {
     )
     String description;
 
+    @Schema(
+            description = "Identifier of the column this Task belongs to",
+            example = "5b70c020-07a5-43c5-b4db-5bd4f72bae94"
+    )
+    String columnId;
+
+    @Schema(
+            description = "Title of the column this Task belongs to",
+            example = "In Progress",
+            accessMode = Schema.AccessMode.READ_ONLY
+    )
+    String columnTitle;
+
     @JsonIgnore
     @Schema(
             description = "The Project whit which this Task is associated",

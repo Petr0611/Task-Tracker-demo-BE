@@ -24,6 +24,8 @@ public interface TaskService {
 
     List<TaskDto> getAll(String projectId, AppUser authUser);
 
+    List<TaskDto> getAllByColumn(String columnId, AppUser authUser);
+
     void delete(String id, AppUser changer);
 
     TaskDto updateTask(String id, TaskUpdateRequestDto updateDto, AppUser changer);

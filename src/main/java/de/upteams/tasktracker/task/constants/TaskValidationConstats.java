@@ -9,6 +9,8 @@ public final class TaskValidationConstats {
 
     public static final String PROJECT_ID_INVALID_MESSAGE = "Project ID must be a valid UUID";
 
+    public static final String COLUMN_ID_INVALID_MESSAGE = "Column ID must be a valid UUID";
+
     private TaskValidationConstats() {
         throw new IllegalStateException("Utility class");
     }
