@@ -65,7 +65,7 @@ public class AppUser extends BaseEntity {
     private String bio;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Project> projects;
+    private List<Project> projects = new ArrayList<>();
 
     public AppUser(String password, String email) {
         this.password = password;
