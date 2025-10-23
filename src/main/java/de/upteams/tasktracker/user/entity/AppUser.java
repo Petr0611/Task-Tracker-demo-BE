@@ -11,6 +11,7 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -70,6 +71,7 @@ public class AppUser extends BaseEntity {
         this.password = password;
         this.email = email;
         role = Role.ROLE_USER;
+        this.projects = new ArrayList<>();
     }
 
     @Override
