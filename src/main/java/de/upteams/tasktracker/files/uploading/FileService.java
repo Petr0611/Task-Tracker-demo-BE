@@ -1,7 +1,6 @@
 package de.upteams.tasktracker.files.uploading;
-
 import org.springframework.scheduling.annotation.Async;
-
+import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -67,4 +66,5 @@ public interface FileService {
             Long contentLength,
             boolean isPublicRead
     );
+    String uploadAvatar(MultipartFile file, String use);
 }
