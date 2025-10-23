@@ -3,6 +3,7 @@ package de.upteams.tasktracker.project.entity;
 import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.project.constants.ProjectValidationConstats;
 import de.upteams.tasktracker.task.entity.Task;
+import de.upteams.tasktracker.taskcolumn.entity.TaskColumn;
 import de.upteams.tasktracker.user.entity.AppUser;
 import de.upteams.tasktracker.utils.BaseEntity;
 import jakarta.persistence.*;
@@ -54,6 +55,9 @@ public class Project extends BaseEntity {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private Set<Collaborator> projectTeam = new HashSet<>();
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final Set<TaskColumn> columns = new HashSet<>();
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private final Set<Task> tasks = new HashSet<>();
 
@@ -70,6 +74,7 @@ public class Project extends BaseEntity {
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
                 ", authorId=" + getIdForToString(owner) +
+                ", columnIds=" + getIdsForToString(columns) +
                 ", tasksIds=" + getIdsForToString(tasks) +
                 '}';
     }

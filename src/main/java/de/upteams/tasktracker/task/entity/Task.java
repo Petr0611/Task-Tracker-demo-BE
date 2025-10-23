@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static de.upteams.tasktracker.utils.EntityUtil.getIdForToString;
+import de.upteams.tasktracker.taskcolumn.entity.TaskColumn;
 import static de.upteams.tasktracker.utils.EntityUtil.getIdsForToString;
 
 /**
@@ -43,9 +44,14 @@ public class Task extends BaseEntity {
     private String description;
 
     @NotNull
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "column_id", nullable = false)
+    private TaskColumn column;
 
     @ManyToMany
     @JoinTable(
@@ -55,15 +61,17 @@ public class Task extends BaseEntity {
     )
     private final Set<Collaborator> executors = new HashSet<>();
 
-    public Task(String title, String description, Project project) {
+    public Task(String title, String description, Project project, TaskColumn column) {
         this.title = title;
         this.description = description;
         this.project = project;
+        this.column = column;
     }
 
-    public Task(String title, Project project) {
+    public Task(String title, Project project, TaskColumn column) {
         this.title = title;
         this.project = project;
+        this.column = column;
     }
 
     @Override
@@ -72,6 +80,7 @@ public class Task extends BaseEntity {
                 "id=" + id +
                 ", executorsIds=" + getIdsForToString(executors) +
                 ", projectId=" + getIdForToString(project) +
+                ", columnId=" + getIdForToString(column) +
                 ", description='" + description + '\'' +
                 ", title='" + title + '\'' +
                 '}';

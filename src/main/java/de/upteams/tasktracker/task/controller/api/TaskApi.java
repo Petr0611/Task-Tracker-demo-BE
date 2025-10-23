@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -21,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.List;
 
@@ -30,43 +28,17 @@ import java.util.List;
 @RequestMapping("/api/v1/tasks")
 public interface TaskApi {
 
-    @Operation(summary = "Create/save Task", description = "Creates a new task associated with a project")
+    @Operation(summary = "Create/save Task", description = "Creates a new task associated with a project column")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Task successfully created",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = TaskDto.class),
-                            examples = @ExampleObject(value = """
-                                    {
-                                      "id": "5",
-                                      "title": "Implement repository layer",
-                                      "description": "Create JPA repositories for all entities",
-                                      "project": { "id": "7", "title": "New Website Development" },
-                                      "executors": []
-                                    }
-                                    """))
-            ),
+                            schema = @Schema(implementation = TaskDto.class))),
             @ApiResponse(responseCode = "400", description = "Invalid task payload",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ValidationErrorDto.class)),
-                            examples = @ExampleObject(value = """
-                                    [
-                                      { "field": "title", "messages": ["must not be blank"] }
-                                    ]
-                                    """))
-            ),
+                            array = @ArraySchema(schema = @Schema(implementation = ValidationErrorDto.class)))),
             @ApiResponse(responseCode = "403", description = "Forbidden - user has no access to the project",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponseDto.class),
-                            examples = @ExampleObject(value = """
-                                    {
-                                      "timestamp": "2025-04-26T10:00:00",
-                                      "status": 403,
-                                      "error": "Forbidden",
-                                      "message": "User has no access to this project",
-                                      "path": "/api/v1/tasks/project/{projectId}"
-                                    }
-                                    """))
-            )
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @PostMapping("/project/{projectId}")
     @ResponseStatus(HttpStatus.CREATED)
@@ -79,11 +51,7 @@ public interface TaskApi {
             )
             String projectId,
 
-            @org.springframework.web.bind.annotation.RequestBody
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    required = true,
-                    description = "Payload for creating a new Task"
-            )
+            @RequestBody
             @Valid
             TaskCreateRequestDto task,
 
@@ -96,21 +64,10 @@ public interface TaskApi {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Task found",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = TaskDto.class)))
-            ,
+                            schema = @Schema(implementation = TaskDto.class))),
             @ApiResponse(responseCode = "404", description = "Task not found",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponseDto.class),
-                            examples = @ExampleObject(value = """
-                                    {
-                                      "timestamp": "2025-04-26T10:00:00",
-                                      "status": 404,
-                                      "error": "Not Found",
-                                      "message": "Task not found with id: 5",
-                                      "path": "/api/v1/tasks/5"
-                                    }
-                                    """))
-            )
+                    schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @GetMapping("/{id}")
     TaskDto getById(
@@ -131,12 +88,10 @@ public interface TaskApi {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List of tasks",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = TaskDto.class))))
-            ,
+                    array = @ArraySchema(schema = @Schema(implementation = TaskDto.class)))),
             @ApiResponse(responseCode = "403", description = "Forbidden - user has no access to the project",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponseDto.class))
-            )
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @GetMapping("/project/{projectId}")
     List<TaskDto> getAll(
@@ -153,13 +108,36 @@ public interface TaskApi {
             AuthUserDetails principal
     );
 
+    @Operation(summary = "Get Tasks for Column", description = "Retrieves all tasks assigned to a specific column")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of tasks",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = TaskDto.class)))),
+            @ApiResponse(responseCode = "403", description = "Forbidden - user has no access to the project",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @GetMapping("/column/{columnId}")
+    List<TaskDto> getAllByColumn(
+            @PathVariable
+            @Parameter(
+                    description = "Unique identifier of the column",
+                    required = true,
+                    schema = @Schema(pattern = TaskValidationConstats.UUID_PATTERN)
+            )
+            String columnId,
+
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
+    );
+
     @Operation(summary = "Delete Task", description = "Deletes a task by its ID")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Task deleted successfully"),
             @ApiResponse(responseCode = "404", description = "Task not found",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponseDto.class)))
-            ,
+                            schema = @Schema(implementation = ErrorResponseDto.class))),
             @ApiResponse(responseCode = "403", description = "Forbidden - user has no access to the project",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponseDto.class)))
@@ -203,12 +181,8 @@ public interface TaskApi {
             )
             String id,
 
-            @org.springframework.web.bind.annotation.RequestBody
+            @RequestBody
             @Parameter(description = "Updated task data", required = true)
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    required = true,
-                    description = "Partial Task data to update"
-            )
             @Valid
             TaskUpdateRequestDto updateDto,
 
