@@ -85,6 +85,17 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public List<ProjectResponseDto> findAllByOwner(AppUser owner) {
+        return repository
+                .findAllByOwner(owner)
+                .stream()
+                .map(mappingService::mapEntityToDto)
+                .toList();
+    }
+
+
+
+    @Override
     public void delete(String id) {
         repository.deleteById(UUID.fromString(id));
     }

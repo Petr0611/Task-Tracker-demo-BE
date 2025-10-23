@@ -8,6 +8,7 @@ import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
 import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
+import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.project.service.interfaces.ProjectService;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import jakarta.validation.Valid;
@@ -39,10 +40,16 @@ public class ProjectController implements ProjectApi {
         return service.getById(id);
     }
 
+//    @Override
+//    public List<ProjectResponseDto> getAll() {
+//        return service.getAll();
+//    }
+
     @Override
-    public List<ProjectResponseDto> getAll() {
-        return service.getAll();
+    public List<ProjectResponseDto> getAll(AuthUserDetails principal) {
+        return service.findAllByOwner(principal.user());
     }
+
 
     @Override
     public void deleteById(String id) {

@@ -1,5 +1,6 @@
 package de.upteams.tasktracker.user.entity;
 
+import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.utils.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -9,6 +10,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.ColumnDefault;
+
+import java.util.List;
 
 /**
  * Application User entity
@@ -59,6 +62,9 @@ public class AppUser extends BaseEntity {
 
     @Column(name = "bio", columnDefinition = "TEXT")
     private String bio;
+
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Project> projects;
 
     public AppUser(String password, String email) {
         this.password = password;

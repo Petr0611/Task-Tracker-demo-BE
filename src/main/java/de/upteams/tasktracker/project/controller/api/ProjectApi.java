@@ -9,6 +9,7 @@ import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
 import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
+import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -116,7 +117,9 @@ public interface ProjectApi {
     })
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    List<ProjectResponseDto> getAll();
+    List<ProjectResponseDto> getAll(AuthUserDetails principal);
+
+//    List<Project> getAll(AuthUserDetails principal);
 
     @Operation(summary = "Delete Project", description = "Delete Project from the Database by its ID")
     @ApiResponses(value = {
