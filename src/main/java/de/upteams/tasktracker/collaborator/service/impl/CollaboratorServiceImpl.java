@@ -114,6 +114,19 @@ public class CollaboratorServiceImpl implements CollaboratorService {
         return collaboratorRepository.save(collaborator);
     }
 
+    @Override
+    public ProjectRoles getUserRoleInProject(AppUser user, UUID projectId) {
+        return collaboratorRepository.findByAppUserIdAndProjectId(user.getId(), projectId)
+                .map(collaborator -> {
+                    Set<ProjectRoles> roles = collaborator.getProjectRolesSet();
+                    if (roles.contains(ProjectRoles.OWNER)) return ProjectRoles.OWNER;
+                    if (roles.contains(ProjectRoles.ADMIN)) return ProjectRoles.ADMIN;
+                    if (roles.contains(ProjectRoles.MEMBER)) return ProjectRoles.MEMBER;
+                    return ProjectRoles.VIEWER;
+                })
+                .orElse(ProjectRoles.VIEWER);
+    }
+
     private boolean hasAnyRequiredRole(Collaborator collaborator, Collection<ProjectRoles> requiredRoles) {
         return collaborator.getProjectRolesSet()
                 .stream()

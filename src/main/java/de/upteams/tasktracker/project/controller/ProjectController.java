@@ -8,7 +8,9 @@ import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
 import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
+import de.upteams.tasktracker.project.dto.response.RoleResponse;
 import de.upteams.tasktracker.project.entity.Project;
+import de.upteams.tasktracker.project.service.ProjectRoleService;
 import de.upteams.tasktracker.project.service.interfaces.ProjectService;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import jakarta.validation.Valid;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * REST Controller that receives http-requests for various operations with Projects
@@ -27,9 +30,11 @@ import java.util.List;
 public class ProjectController implements ProjectApi {
 
     private final ProjectService service;
+    private final ProjectRoleService projectRoleService;
 
-    public ProjectController(ProjectService service) {
+    public ProjectController(ProjectService service, ProjectRoleService projectRoleService) {
         this.service = service;
+        this.projectRoleService = projectRoleService;
     }
 
     @Override
@@ -81,5 +86,10 @@ public class ProjectController implements ProjectApi {
                                         UpdateCollaboratorRolesDto dto,
                                         AuthUserDetails principal) {
         service.updateUserRolesInProject(projectId, userId, dto, principal.user());
+    }
+
+    @Override
+    public RoleResponse getUserRole(String projectId, AuthUserDetails principal) {
+        return projectRoleService.getUserRole(UUID.fromString(projectId), principal);
     }
 }
