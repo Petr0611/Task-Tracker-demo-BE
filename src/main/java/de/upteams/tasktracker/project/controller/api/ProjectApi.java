@@ -115,9 +115,9 @@ public interface ProjectApi {
                     content = @Content(mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = ProjectResponseDto.class))))
     })
-    @GetMapping
+    @GetMapping("/my")
     @PreAuthorize("isAuthenticated()")
-    List<ProjectResponseDto> getAll(AuthUserDetails principal);
+    List<ProjectResponseDto> getAll(@AuthenticationPrincipal AuthUserDetails principal);
 
 //    List<Project> getAll(AuthUserDetails principal);
 

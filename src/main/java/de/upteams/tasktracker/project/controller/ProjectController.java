@@ -14,6 +14,7 @@ import de.upteams.tasktracker.security.service.AuthUserDetails;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.List;
 /**
  * REST Controller that receives http-requests for various operations with Projects
  */
+@RequestMapping("/api/v1/projects")
 @RestController
 public class ProjectController implements ProjectApi {
 
