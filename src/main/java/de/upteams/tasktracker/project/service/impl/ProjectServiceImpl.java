@@ -22,6 +22,7 @@ import de.upteams.tasktracker.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -41,6 +42,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final InvitationService invitationService;
     private final UserService userService;
 
+    @Transactional
     @Override
     public ProjectResponseDto save(ProjectCreateDto newProjectDto, AppUser projectOwner) {
         Project project = mappingService.mapDtoToEntity(newProjectDto);

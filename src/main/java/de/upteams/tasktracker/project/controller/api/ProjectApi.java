@@ -9,7 +9,7 @@ import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
 import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
-import de.upteams.tasktracker.project.entity.Project;
+import de.upteams.tasktracker.project.dto.response.RoleResponse;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -117,7 +117,11 @@ public interface ProjectApi {
     })
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    List<ProjectResponseDto> getAll(AuthUserDetails principal);
+    List<ProjectResponseDto> getAll(
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
+    );
 
 //    List<Project> getAll(AuthUserDetails principal);
 
@@ -266,6 +270,37 @@ public interface ProjectApi {
             @PathVariable String userId,
             @RequestBody @Valid UpdateCollaboratorRolesDto dto,
             @AuthenticationPrincipal @Parameter(hidden = true) AuthUserDetails principal
+    );
+
+    @Operation(
+            summary = "Get current user's role in project",
+            description = "Returns the role (OWNER, ADMIN, MEMBER, or VIEWER) of the authenticated user for the given project"
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Role retrieved successfully",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = RoleResponse.class),
+                    examples = @ExampleObject(value = """
+                            { "role": "ADMIN" }
+                            """)
+            )
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "Forbidden — user does not have access to the project",
+            content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+    )
+    @GetMapping("/{projectId}/role")
+    RoleResponse getUserRole(
+            @PathVariable
+            @Parameter(description = "Project ID to check user's role for")
+            String projectId,
+
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
     );
 
 }

@@ -27,4 +27,6 @@ public interface CollaboratorService {
     Collaborator activateCollaborator(AppUser user, Project project, Set<ProjectRoles> roles);
 
     Collaborator updateCollaboratorRoles(AppUser user, Project project, Set<ProjectRoles> roles);
+
+    ProjectRoles getUserRoleInProject(AppUser user, UUID projectId);
 }
