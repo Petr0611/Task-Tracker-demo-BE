@@ -18,4 +18,9 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     @Query("select t from Task t where t.column = ?1")
     List<Task> findByColumn(TaskColumn column);
+
+    List<Task> findAllByColumnOrderByOrderIndexAsc(TaskColumn column);
+
+    @Query("select coalesce(max(t.orderIndex), -1) from Task t where t.column = ?1")
+    Integer findMaxOrderIndexByColumn(TaskColumn column);
 }

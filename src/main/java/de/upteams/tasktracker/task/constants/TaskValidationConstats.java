@@ -11,6 +11,8 @@ public final class TaskValidationConstats {
 
     public static final String COLUMN_ID_INVALID_MESSAGE = "Column ID must be a valid UUID";
 
+    public static final String ORDER_INDEX_INVALID_MESSAGE = "Order index must be zero or positive";
+
     private TaskValidationConstats() {
         throw new IllegalStateException("Utility class");
     }

@@ -45,6 +45,13 @@ public class TaskDto {
     )
     String columnTitle;
 
+    @Schema(
+            description = "Order index of the task inside its column",
+            example = "3",
+            accessMode = Schema.AccessMode.READ_ONLY
+    )
+    Integer orderIndex;
+
     @JsonIgnore
     @Schema(
             description = "The Project whit which this Task is associated",

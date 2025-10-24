@@ -2,6 +2,7 @@ package de.upteams.tasktracker.task.service.interfaces;
 
 import de.upteams.tasktracker.task.dto.TaskCreateRequestDto;
 import de.upteams.tasktracker.task.dto.TaskDto;
+import de.upteams.tasktracker.task.dto.TaskMoveRequestDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.entity.Task;
 import de.upteams.tasktracker.user.entity.AppUser;
@@ -29,5 +30,7 @@ public interface TaskService {
     void delete(String id, AppUser changer);
 
     TaskDto updateTask(String id, TaskUpdateRequestDto updateDto, AppUser changer);
+
+    TaskDto moveTask(String id, TaskMoveRequestDto moveDto, AppUser changer);
 
 }
