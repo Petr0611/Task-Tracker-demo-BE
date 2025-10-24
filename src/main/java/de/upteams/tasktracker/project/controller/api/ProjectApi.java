@@ -117,7 +117,11 @@ public interface ProjectApi {
     })
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    List<ProjectResponseDto> getAll(AuthUserDetails principal);
+    List<ProjectResponseDto> getAll(
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
+    );
 
 //    List<Project> getAll(AuthUserDetails principal);
 
