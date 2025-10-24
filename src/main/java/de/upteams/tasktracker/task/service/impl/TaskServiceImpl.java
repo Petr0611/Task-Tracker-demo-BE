@@ -8,6 +8,7 @@ import de.upteams.tasktracker.project.service.interfaces.ProjectService;
 import de.upteams.tasktracker.task.constants.TaskValidationConstats;
 import de.upteams.tasktracker.task.dto.TaskCreateRequestDto;
 import de.upteams.tasktracker.task.dto.TaskDto;
+import de.upteams.tasktracker.task.dto.TaskMoveRequestDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.entity.Task;
 import de.upteams.tasktracker.task.exception.TaskNotFoundException;
@@ -20,6 +21,7 @@ import de.upteams.tasktracker.user.entity.AppUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +43,7 @@ public class TaskServiceImpl implements TaskService {
     private final TaskColumnService columnService;
 
     @Override
+    @Transactional
     public TaskDto save(final String projectId, final TaskCreateRequestDto newTaskDto, final AppUser creator) {
         final Project project = getProjectOrThrow(projectId);
         enforceProjectAccess(project, creator);
@@ -53,6 +56,7 @@ public class TaskServiceImpl implements TaskService {
         entity.setDescription(newTaskDto.description());
         entity.setProject(project);
         entity.setColumn(column);
+        entity.setOrderIndex(getNextOrderIndex(column));
 
         return mappingService.mapEntityToDto(repository.save(entity));
     }
@@ -99,13 +103,18 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional
     public void delete(final String id, final AppUser changer) {
         final Task existedTask = getOrThrow(id);
         enforceTaskManagementPermission(existedTask.getProject(), changer);
+        final TaskColumn column = existedTask.getColumn();
         repository.delete(existedTask);
+        repository.flush();
+        reindexColumn(column);
     }
 
     @Override
+    @Transactional
     public TaskDto updateTask(final String id, final TaskUpdateRequestDto updateDto, final AppUser changer) {
         final Task task = getOrThrow(id);
         enforceTaskManagementPermission(task.getProject(), changer);
@@ -121,12 +130,37 @@ public class TaskServiceImpl implements TaskService {
         if (updateDto.columnId() != null && !updateDto.columnId().isBlank()) {
             final TaskColumn newColumn = getColumnOrThrow(updateDto.columnId());
             ensureColumnBelongsToProject(newColumn, task.getProject());
-            task.setColumn(newColumn);
-            task.setProject(newColumn.getProject());
+            if (!newColumn.equals(task.getColumn())) {
+                moveTaskToPosition(task, newColumn, Integer.MAX_VALUE);
+            }
         }
 
         final Task updated = repository.save(task);
         return mappingService.mapEntityToDto(updated);
+    }
+
+    @Override
+    @Transactional
+    public TaskDto moveTask(String id, TaskMoveRequestDto moveDto, AppUser changer) {
+        final Task task = getOrThrow(id);
+        enforceTaskManagementPermission(task.getProject(), changer);
+
+        final TaskColumn targetColumn = moveDto.columnId() != null && !moveDto.columnId().isBlank()
+                ? getColumnOrThrow(moveDto.columnId())
+                : task.getColumn();
+        ensureColumnBelongsToProject(targetColumn, task.getProject());
+
+        if (moveDto.orderIndex() == null) {
+            throw new RestApiException(HttpStatus.BAD_REQUEST, TaskValidationConstats.ORDER_INDEX_INVALID_MESSAGE);
+        }
+
+        final int targetIndex = moveDto.orderIndex();
+        if (targetIndex < 0) {
+            throw new RestApiException(HttpStatus.BAD_REQUEST, TaskValidationConstats.ORDER_INDEX_INVALID_MESSAGE);
+        }
+
+        moveTaskToPosition(task, targetColumn, targetIndex);
+        return mappingService.mapEntityToDto(task);
     }
 
     private void enforceProjectAccess(final Project project, final AppUser user) {
@@ -173,8 +207,61 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private void ensureColumnBelongsToProject(TaskColumn column, Project project) {
-        if (!column.getProject().equals(project)) {
+        if (column.getProject() == null || project == null) {
             throw new RestApiException(HttpStatus.BAD_REQUEST, COLUMN_PROJECT_MISMATCH_MESSAGE);
+        }
+
+        final UUID columnProjectId = column.getProject().getId();
+        final UUID projectId = project.getId();
+
+        if (columnProjectId == null || projectId == null || !columnProjectId.equals(projectId)) {
+            throw new RestApiException(HttpStatus.BAD_REQUEST, COLUMN_PROJECT_MISMATCH_MESSAGE);
+        }
+    }
+
+    private int getNextOrderIndex(TaskColumn column) {
+        final Integer maxOrderIndex = repository.findMaxOrderIndexByColumn(column);
+        return maxOrderIndex == null ? 0 : maxOrderIndex + 1;
+    }
+
+    private void moveTaskToPosition(final Task task, final TaskColumn targetColumn, final int targetOrderIndex) {
+        final TaskColumn sourceColumn = task.getColumn();
+        final List<Task> sourceTasks = repository.findAllByColumnOrderByOrderIndexAsc(sourceColumn);
+        sourceTasks.removeIf(it -> it.getId().equals(task.getId()));
+
+        if (!sourceColumn.equals(targetColumn)) {
+            reindexTasks(sourceTasks);
+            repository.saveAll(sourceTasks);
+
+            final List<Task> targetTasks = repository.findAllByColumnOrderByOrderIndexAsc(targetColumn);
+            insertTaskAtPosition(task, targetColumn, targetOrderIndex, targetTasks);
+            repository.saveAll(targetTasks);
+        } else {
+            insertTaskAtPosition(task, targetColumn, targetOrderIndex, sourceTasks);
+            repository.saveAll(sourceTasks);
+        }
+    }
+
+    private void insertTaskAtPosition(Task task, TaskColumn column, int targetOrderIndex, List<Task> tasks) {
+        final int normalizedIndex = Math.min(Math.max(targetOrderIndex, 0), tasks.size());
+        task.setColumn(column);
+        task.setProject(column.getProject());
+        tasks.add(normalizedIndex, task);
+        reindexTasks(tasks);
+    }
+
+    private void reindexColumn(TaskColumn column) {
+        final List<Task> tasks = repository.findAllByColumnOrderByOrderIndexAsc(column);
+        if (tasks.isEmpty()) {
+            return;
+        }
+        reindexTasks(tasks);
+        repository.saveAll(tasks);
+    }
+
+    private void reindexTasks(List<Task> tasks) {
+        for (int i = 0; i < tasks.size(); i++) {
+            tasks.get(i).setOrderIndex(i);
         }
     }
 

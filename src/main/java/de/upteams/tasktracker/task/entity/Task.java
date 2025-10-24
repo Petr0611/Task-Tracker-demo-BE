@@ -4,6 +4,7 @@ import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.utils.BaseEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -53,6 +54,11 @@ public class Task extends BaseEntity {
     @JoinColumn(name = "column_id", nullable = false)
     private TaskColumn column;
 
+    @NotNull
+    @Min(0)
+    @Column(name = "order_index", nullable = false)
+    private Integer orderIndex;
+
     @ManyToMany
     @JoinTable(
             name = "task_user",
@@ -66,12 +72,14 @@ public class Task extends BaseEntity {
         this.description = description;
         this.project = project;
         this.column = column;
+        this.orderIndex = 0;
     }
 
     public Task(String title, Project project, TaskColumn column) {
         this.title = title;
         this.project = project;
         this.column = column;
+        this.orderIndex = 0;
     }
 
     @Override
@@ -81,6 +89,7 @@ public class Task extends BaseEntity {
                 ", executorsIds=" + getIdsForToString(executors) +
                 ", projectId=" + getIdForToString(project) +
                 ", columnId=" + getIdForToString(column) +
+                ", orderIndex=" + orderIndex +
                 ", description='" + description + '\'' +
                 ", title='" + title + '\'' +
                 '}';

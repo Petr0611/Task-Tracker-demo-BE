@@ -6,6 +6,7 @@ import de.upteams.tasktracker.security.service.AuthUserDetails;
 import de.upteams.tasktracker.task.constants.TaskValidationConstats;
 import de.upteams.tasktracker.task.dto.TaskCreateRequestDto;
 import de.upteams.tasktracker.task.dto.TaskDto;
+import de.upteams.tasktracker.task.dto.TaskMoveRequestDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -185,6 +186,40 @@ public interface TaskApi {
             @Parameter(description = "Updated task data", required = true)
             @Valid
             TaskUpdateRequestDto updateDto,
+
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
+    );
+
+    @Operation(summary = "Move Task", description = "Moves a task to a different position or column")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Task moved successfully",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = TaskDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid move payload",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = ValidationErrorDto.class)))),
+            @ApiResponse(responseCode = "403", description = "Forbidden - user has no access to the project",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "Task not found",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @PatchMapping("/{id}/move")
+    TaskDto move(
+            @PathVariable
+            @Parameter(
+                    description = "Unique identifier of the Task",
+                    required = true,
+                    schema = @Schema(pattern = TaskValidationConstats.UUID_PATTERN)
+            )
+            String id,
+
+            @RequestBody
+            @Valid
+            TaskMoveRequestDto moveDto,
 
             @AuthenticationPrincipal
             @Parameter(hidden = true)

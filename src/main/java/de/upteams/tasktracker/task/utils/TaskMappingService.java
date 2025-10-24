@@ -22,6 +22,7 @@ public interface TaskMappingService {
     @Mapping(target = "executors", ignore = true)
     @Mapping(target = "columnId", source = "column.id")
     @Mapping(target = "columnTitle", source = "column.title")
+    @Mapping(target = "orderIndex", source = "orderIndex")
     TaskDto mapEntityToDto(Task entity);
 
     // @Mapping(target = "project", ignore = true)

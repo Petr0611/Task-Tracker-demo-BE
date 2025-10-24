@@ -4,6 +4,7 @@ import de.upteams.tasktracker.security.service.AuthUserDetails;
 import de.upteams.tasktracker.task.controller.api.TaskApi;
 import de.upteams.tasktracker.task.dto.TaskCreateRequestDto;
 import de.upteams.tasktracker.task.dto.TaskDto;
+import de.upteams.tasktracker.task.dto.TaskMoveRequestDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.service.interfaces.TaskService;
 import jakarta.validation.Valid;
@@ -64,5 +65,10 @@ public class TaskController implements TaskApi {
     @Override
     public TaskDto update(String id, @Valid TaskUpdateRequestDto updateDto, AuthUserDetails principal) {
         return service.updateTask(id, updateDto, principal.user());
+    }
+
+    @Override
+    public TaskDto move(String id, @Valid TaskMoveRequestDto moveDto, AuthUserDetails principal) {
+        return service.moveTask(id, moveDto, principal.user());
     }
 }
