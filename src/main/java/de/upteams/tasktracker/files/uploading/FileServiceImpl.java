@@ -1,11 +1,13 @@
 package de.upteams.tasktracker.files.uploading;
 
 import de.upteams.tasktracker.configuration.AwsS3Configuration;
+import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
 import de.upteams.tasktracker.user.entity.AppUser;
 import de.upteams.tasktracker.user.service.UserService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -143,7 +145,8 @@ public class FileServiceImpl implements FileService {
                     true
             ).join();
             if (!success) {
-                throw new RuntimeException("Upload failed for " + key);
+                throw new RestApiException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "File upload failed for key: " + key);
             }
             String newAvatarUrl = String.format("%s/%s/%s",
                     config.getEndpoint(),
