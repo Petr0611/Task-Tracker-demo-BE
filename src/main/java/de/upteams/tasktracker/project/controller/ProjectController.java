@@ -9,7 +9,6 @@ import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.dto.response.RoleResponse;
-import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.project.service.ProjectRoleService;
 import de.upteams.tasktracker.project.service.interfaces.ProjectService;
 import de.upteams.tasktracker.security.service.AuthUserDetails;

@@ -9,6 +9,7 @@ import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
 import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
+import de.upteams.tasktracker.project.dto.response.RoleResponse;
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -268,4 +269,5 @@ public interface ProjectApi {
             @AuthenticationPrincipal @Parameter(hidden = true) AuthUserDetails principal
     );
 
+    RoleResponse getUserRole(String projectId, AuthUserDetails principal);
 }

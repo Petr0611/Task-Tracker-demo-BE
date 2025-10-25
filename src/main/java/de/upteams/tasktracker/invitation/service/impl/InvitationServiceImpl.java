@@ -81,25 +81,60 @@ public class InvitationServiceImpl implements InvitationService {
     @Transactional
     public InvitationAcceptanceResult acceptInvitation(String inviteToken, AppUser currentUser) {
         if (inviteToken == null || inviteToken.isBlank()) {
-            throw new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is invalid or expired");
+            log.warn("Empty or null invitation token received by user {}", currentUser.getEmail());
+            throw new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is required");
         }
 
+        // Находим приглашение по токену
         Invitation invitation = invitationRepository.findByInviteToken(inviteToken)
-                .orElseThrow(() -> new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is invalid or expired"));
+                .orElseThrow(() -> {
+                    log.warn("Invitation token not found: {}", inviteToken);
+                    return new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is invalid");
+                });
 
         Instant now = Instant.now(clock);
-        if (!InvitationStatus.PENDING.equals(invitation.getStatus()) || invitation.getExpiresAt().isBefore(now)) {
-            throw new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is invalid or expired");
+
+        // Проверяем статус
+        if (!InvitationStatus.PENDING.equals(invitation.getStatus())) {
+            log.warn("Invitation token {} already used or cancelled. Current status: {}", inviteToken, invitation.getStatus());
+            throw new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token has already been used or cancelled");
         }
 
-        String normalizedEmail = normalizeEmail(currentUser.getEmail());
-        if (!normalizedEmail.equals(invitation.getEmail())) {
-            throw new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is invalid or expired");
+        // Проверяем истечение
+        if (invitation.getExpiresAt().isBefore(now)) {
+            log.warn("Invitation token {} expired at {}", inviteToken, invitation.getExpiresAt());
+            throw new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token has expired");
         }
 
+        // Активируем текущего пользователя в проекте
         Collaborator collaborator = activateCollaborator(currentUser, invitation);
+
+        log.info("User {} successfully accepted invitation {} for project {}", currentUser.getEmail(), inviteToken, invitation.getProject().getId());
         return new InvitationAcceptanceResult(invitation, collaborator);
     }
+
+
+//    public InvitationAcceptanceResult acceptInvitation(String inviteToken, AppUser currentUser) {
+//        if (inviteToken == null || inviteToken.isBlank()) {
+//            throw new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is invalid or expired");
+//        }
+//
+//        Invitation invitation = invitationRepository.findByInviteToken(inviteToken)
+//                .orElseThrow(() -> new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is invalid or expired"));
+//
+//        Instant now = Instant.now(clock);
+//        if (!InvitationStatus.PENDING.equals(invitation.getStatus()) || invitation.getExpiresAt().isBefore(now)) {
+//            throw new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is invalid or expired");
+//        }
+//
+//        String normalizedEmail = normalizeEmail(currentUser.getEmail());
+//        if (!normalizedEmail.equals(invitation.getEmail())) {
+//            throw new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is invalid or expired");
+//        }
+//
+//        Collaborator collaborator = activateCollaborator(currentUser, invitation);
+//        return new InvitationAcceptanceResult(invitation, collaborator);
+//    }
 
     private Invitation refreshExistingInvitation(Invitation invitation, Instant newExpiry, ProjectRoles role) {
         invitation.setExpiresAt(newExpiry);
