@@ -303,4 +303,17 @@ public interface ProjectApi {
             AuthUserDetails principal
     );
 
+    @Operation(summary = "Get current user's projects", description = "Returns only the projects owned by the current authenticated user")
+    @ApiResponse(responseCode = "200", description = "List of user's projects",
+            content = @Content(mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = ProjectResponseDto.class))))
+    @GetMapping("/my")
+    @PreAuthorize("isAuthenticated()")
+    List<ProjectResponseDto> getMyProjects(
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
+    );
+
+
 }
