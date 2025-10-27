@@ -13,6 +13,8 @@ public final class TaskValidationConstats {
 
     public static final String ORDER_INDEX_INVALID_MESSAGE = "Order index must be zero or positive";
 
+    public static final String DUE_DATE_INVALID_MESSAGE = "Due date must be in the future";
+
     private TaskValidationConstats() {
         throw new IllegalStateException("Utility class");
     }

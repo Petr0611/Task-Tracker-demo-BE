@@ -8,6 +8,7 @@ import de.upteams.tasktracker.user.dto.EmployeeDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Value;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -59,6 +60,12 @@ public class TaskDto {
             accessMode = Schema.AccessMode.READ_ONLY
     )
     Integer orderIndex;
+
+    @Schema(
+            description = "Deadline of the task",
+            example = "2024-05-01T18:00:00"
+    )
+    LocalDateTime dueDate;
 
     @JsonIgnore
     @Schema(

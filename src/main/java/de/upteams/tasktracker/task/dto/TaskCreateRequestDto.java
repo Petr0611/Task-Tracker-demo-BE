@@ -3,8 +3,11 @@ package de.upteams.tasktracker.task.dto;
 import de.upteams.tasktracker.task.constants.TaskValidationConstats;
 import de.upteams.tasktracker.task.entity.TaskStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+
+import java.time.LocalDateTime;
 
 /**
  * DTO for creating a Task
@@ -13,6 +16,7 @@ import jakarta.validation.constraints.Pattern;
  * @param description Description of the task
  * @param status      Initial status of the task
  * @param columnId    Identifier of the column the task should belong to
+ * @param dueDate     Deadline of the task
  */
 @Schema(description = "Request DTO for creating a Task")
 public record TaskCreateRequestDto(
@@ -42,6 +46,13 @@ public record TaskCreateRequestDto(
         )
         @NotBlank
         @Pattern(regexp = TaskValidationConstats.UUID_PATTERN, message = TaskValidationConstats.COLUMN_ID_INVALID_MESSAGE)
-        String columnId
+        String columnId,
+
+        @Schema(
+                description = "Deadline of the Task",
+                example = "2024-05-01T18:00:00"
+        )
+        @Future(message = TaskValidationConstats.DUE_DATE_INVALID_MESSAGE)
+        LocalDateTime dueDate
 ) {
 }

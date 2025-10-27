@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 /**
@@ -13,6 +15,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class EmailService {
+
+    private static final DateTimeFormatter DUE_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -62,6 +66,23 @@ public class EmailService {
                 <p>Подтвердите участие по ссылке: <a href="%s">%s</a></p>
                 """.formatted(projectName, confirmLink, confirmLink);
         emailSender.sendEmail(sentTo, "Confirm participation in project " + projectName, body);
+    }
+
+    @Async
+    public void sendTaskDueReminder(
+            String sentTo,
+            String projectTitle,
+            String taskTitle,
+            LocalDateTime dueDate,
+            String timeLeftDescription
+    ) {
+        String formattedDueDate = dueDate.format(DUE_DATE_FORMATTER);
+        String subject = "Напоминание о сроке задачи '" + taskTitle + "'";
+        String body = """
+                <p>Задача <strong>%s</strong> в проекте <strong>%s</strong> должна быть выполнена до %s.</p>
+                <p>Осталось: %s.</p>
+                """.formatted(taskTitle, projectTitle, formattedDueDate, timeLeftDescription);
+        emailSender.sendEmail(sentTo, subject, body);
     }
 
     private String buildFrontendLink(String path, String inviteToken) {

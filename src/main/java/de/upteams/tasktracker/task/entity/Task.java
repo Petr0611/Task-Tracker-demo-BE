@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -72,6 +73,15 @@ public class Task extends BaseEntity {
     )
     private final Set<Collaborator> executors = new HashSet<>();
 
+    @Column(name = "due_date")
+    private LocalDateTime dueDate;
+
+    @Column(name = "due_date_reminder_24_sent", nullable = false)
+    private boolean dueDateReminder24Sent;
+
+    @Column(name = "due_date_reminder_1_sent", nullable = false)
+    private boolean dueDateReminder1Sent;
+
     public Task(String title, String description, Project project, TaskColumn column) {
         this.title = title;
         this.description = description;
@@ -98,6 +108,9 @@ public class Task extends BaseEntity {
                 ", columnId=" + getIdForToString(column) +
                 ", status=" + status +
                 ", orderIndex=" + orderIndex +
+                ", dueDate=" + dueDate +
+                ", dueDateReminder24Sent=" + dueDateReminder24Sent +
+                ", dueDateReminder1Sent=" + dueDateReminder1Sent +
                 ", description='" + description + '\'' +
                 ", title='" + title + '\'' +
                 '}';
