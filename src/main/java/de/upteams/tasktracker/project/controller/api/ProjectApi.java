@@ -269,5 +269,48 @@ public interface ProjectApi {
             @AuthenticationPrincipal @Parameter(hidden = true) AuthUserDetails principal
     );
 
-    RoleResponse getUserRole(String projectId, AuthUserDetails principal);
+    @Operation(
+            summary = "Get current user's role in project",
+            description = "Returns the role (OWNER, ADMIN, MEMBER, or VIEWER) of the authenticated user for the given project"
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Role retrieved successfully",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = RoleResponse.class),
+                    examples = @ExampleObject(value = """
+                            { "role": "ADMIN" }
+                            """)
+            )
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "Forbidden — user does not have access to the project",
+            content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+    )
+    @GetMapping("/{projectId}/role")
+    RoleResponse getUserRole(
+            @PathVariable
+            @Parameter(description = "Project ID to check user's role for")
+            String projectId,
+
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
+    );
+
+    @Operation(summary = "Get current user's projects", description = "Returns only the projects owned by the current authenticated user")
+    @ApiResponse(responseCode = "200", description = "List of user's projects",
+            content = @Content(mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = ProjectResponseDto.class))))
+    @GetMapping("/my")
+    @PreAuthorize("isAuthenticated()")
+    List<ProjectResponseDto> getMyProjects(
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
+    );
+
+
 }
