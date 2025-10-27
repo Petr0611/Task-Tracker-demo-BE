@@ -21,18 +21,22 @@ public class ProjectPermissionEvaluator {
 
     public boolean isOwner(String projectId, Authentication authentication) {
         AppUser currentUser = extractUser(authentication);
+        UUID projectUUID = UUID.fromString(projectId);
+
         return collaboratorService.hasUserPermission(
                 currentUser,
-                UUID.fromString(projectId),
+                projectUUID,
                 List.of(ProjectRoles.OWNER)
         );
     }
 
     public boolean hasAnyRole(String projectId, Authentication authentication, List<ProjectRoles> roles) {
         AppUser currentUser = extractUser(authentication);
+        UUID projectUUID = UUID.fromString(projectId);
+
         return collaboratorService.hasUserPermission(
                 currentUser,
-                UUID.fromString(projectId),
+                projectUUID,
                 roles
         );
     }

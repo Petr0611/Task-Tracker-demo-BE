@@ -10,7 +10,6 @@ import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.dto.response.RoleResponse;
-import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -116,8 +115,8 @@ public interface ProjectApi {
                     content = @Content(mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = ProjectResponseDto.class))))
     })
-    @GetMapping("/my")
-    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
     List<ProjectResponseDto> getAll(@AuthenticationPrincipal AuthUserDetails principal);
 
 //    List<Project> getAll(AuthUserDetails principal);
