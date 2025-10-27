@@ -2,10 +2,13 @@ package de.upteams.tasktracker.task.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
+import de.upteams.tasktracker.task.constants.TaskValidationConstats;
+import de.upteams.tasktracker.task.entity.TaskStatus;
 import de.upteams.tasktracker.user.dto.EmployeeDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Value;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,11 +49,23 @@ public class TaskDto {
     String columnTitle;
 
     @Schema(
+            description = "Current status of the Task",
+            example = "IN_PROGRESS"
+    )
+    TaskStatus status;
+
+    @Schema(
             description = "Order index of the task inside its column",
             example = "3",
             accessMode = Schema.AccessMode.READ_ONLY
     )
     Integer orderIndex;
+
+    @Schema(
+            description = "Deadline of the task",
+            example = "2024-05-01T18:00:00"
+    )
+    LocalDateTime dueDate;
 
     @JsonIgnore
     @Schema(

@@ -2,6 +2,7 @@ package de.upteams.tasktracker.task.entity;
 
 import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.project.entity.Project;
+import de.upteams.tasktracker.taskcomment.entity.Comment;
 import de.upteams.tasktracker.utils.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -12,7 +13,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static de.upteams.tasktracker.utils.EntityUtil.getIdForToString;
@@ -55,6 +59,11 @@ public class Task extends BaseEntity {
     private TaskColumn column;
 
     @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private TaskStatus status = TaskStatus.NEW;
+
+    @NotNull
     @Min(0)
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex;
@@ -67,12 +76,25 @@ public class Task extends BaseEntity {
     )
     private final Set<Collaborator> executors = new HashSet<>();
 
+    @Column(name = "due_date")
+    private LocalDateTime dueDate;
+
+    @Column(name = "due_date_reminder_24_sent", nullable = false)
+    private boolean dueDateReminder24Sent;
+
+    @Column(name = "due_date_reminder_1_sent", nullable = false)
+    private boolean dueDateReminder1Sent;
+
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<Comment> comments = new ArrayList<>();
+
     public Task(String title, String description, Project project, TaskColumn column) {
         this.title = title;
         this.description = description;
         this.project = project;
         this.column = column;
         this.orderIndex = 0;
+        this.status = TaskStatus.NEW;
     }
 
     public Task(String title, Project project, TaskColumn column) {
@@ -80,6 +102,7 @@ public class Task extends BaseEntity {
         this.project = project;
         this.column = column;
         this.orderIndex = 0;
+        this.status = TaskStatus.NEW;
     }
 
     @Override
@@ -89,7 +112,11 @@ public class Task extends BaseEntity {
                 ", executorsIds=" + getIdsForToString(executors) +
                 ", projectId=" + getIdForToString(project) +
                 ", columnId=" + getIdForToString(column) +
+                ", status=" + status +
                 ", orderIndex=" + orderIndex +
+                ", dueDate=" + dueDate +
+                ", dueDateReminder24Sent=" + dueDateReminder24Sent +
+                ", dueDateReminder1Sent=" + dueDateReminder1Sent +
                 ", description='" + description + '\'' +
                 ", title='" + title + '\'' +
                 '}';

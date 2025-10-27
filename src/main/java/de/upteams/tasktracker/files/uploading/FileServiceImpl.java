@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -130,16 +131,24 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public String uploadAvatar(MultipartFile file, String userId) {
+    public String uploadAvatar(MultipartFile file, String email) {
         try {
-            AppUser user = userService.getByIdOrThrow(userId);
-            String key = String.format("avatars/%s_%s", userId, file.getOriginalFilename());
+            if (file == null || file.isEmpty()) {
+                throw new RestApiException(HttpStatus.BAD_REQUEST, "File must not be empty");
+            }
+            if (email == null || email.isBlank()) {
+                throw new RestApiException(HttpStatus.BAD_REQUEST, "Email must not be blank");
+            }
+            AppUser user = userService.getByEmailOrThrow(email);
+            String key = String.format("avatars/%s_%s", email, file.getOriginalFilename());
             InputStream inputStream = file.getInputStream();
+
+            //upload to s3
             long size = file.getSize();
             boolean success = uploadFileAsync(
                     key,
                     inputStream,
-                    Map.of("uploadedBy", userId),
+                    Map.of("uploadedBy", email),
                     file.getContentType(),
                     size,
                     true
@@ -148,32 +157,66 @@ public class FileServiceImpl implements FileService {
                 throw new RestApiException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "File upload failed for key: " + key);
             }
+            //creating new URL
             String newAvatarUrl = String.format("%s/%s/%s",
                     config.getEndpoint(),
                     config.getBucketName(),
                     key);
+            //remove old avatar
             String oldUrl = user.getAvatarUrl();
-
             if (oldUrl != null && !oldUrl.isBlank() && isExternalAvatar(oldUrl)) {
                 try {
                     String oldKey = extractKeyFromUrl(oldUrl);
                     deleteFile(oldKey);
                     log.info("Deleted old external avatar {}: ", oldKey);
                 } catch (Exception e) {
-                    log.warn("Failed to delete old external avatar for user {}: {}", userId, e.getMessage());
+                    log.warn("Failed to delete old external avatar for user {}: {}", email, e.getMessage());
                 }
             }
-
+            //update user
             user.setAvatarUrl(newAvatarUrl);
             userService.saveOrUpdate(user);
-
-            log.info("User {} avatar uploaded successfully", userId);
+            log.info("User {} avatar uploaded successfully", email);
             return newAvatarUrl;
 
+        } catch (RestApiException e) {
+
+            throw e;
+
+        } catch (IllegalArgumentException e) {
+            throw new RestApiException(HttpStatus.BAD_REQUEST, e.getMessage());
+
+        } catch (IOException e) {
+            log.error("Error reading avatar file for user {}: {}", email, e.getMessage(), e);
+            throw new RestApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not read file stream");
+
         } catch (Exception e) {
-            log.error("Error uploading avatar for user {}: {}", userId, e.getMessage(), e);
-            throw new RuntimeException("Avatar uploadAvatar failed", e);
+            log.error("Unexpected error uploading avatar for {}: {}", email, e.getMessage(), e);
+            throw new RestApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error during upload");
         }
+    }
+
+    @Override
+    public void deleteUserAvatar(String email) {
+        AppUser user = userService.getByEmailOrThrow(email);
+        String oldUrl = user.getAvatarUrl();
+
+        if (oldUrl == null || oldUrl.isBlank()) {
+            throw new RestApiException(HttpStatus.NOT_FOUND, "User has no avatar to delete");
+        }
+
+        if (isExternalAvatar(oldUrl)) {
+            try {
+                String oldKey = extractKeyFromUrl(oldUrl);
+                deleteFile(oldKey);
+                log.info("Deleted avatar {} from cloud", oldKey);
+            } catch (Exception e) {
+                throw new RestApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete avatar from S3");
+            }
+        }
+
+        user.setAvatarUrl("");
+        userService.saveOrUpdate(user);
     }
 
     private boolean isExternalAvatar(String avatarUrl) {
@@ -191,7 +234,7 @@ public class FileServiceImpl implements FileService {
     private String extractKeyFromUrl(String url) {
         int index = url.indexOf("avatars/");
         if (index == -1) {
-            throw new IllegalArgumentException("Cannot extract key from url: " + url);
+            throw new RestApiException(HttpStatus.BAD_REQUEST, "Cannot extract key from url: " + url);
         }
         return url.substring(index);
     }

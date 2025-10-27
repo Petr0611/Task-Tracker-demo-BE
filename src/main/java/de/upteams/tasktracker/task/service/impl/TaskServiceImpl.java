@@ -11,6 +11,7 @@ import de.upteams.tasktracker.task.dto.TaskDto;
 import de.upteams.tasktracker.task.dto.TaskMoveRequestDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.entity.Task;
+import de.upteams.tasktracker.task.entity.TaskStatus;
 import de.upteams.tasktracker.task.exception.TaskNotFoundException;
 import de.upteams.tasktracker.task.persistence.TaskRepository;
 import de.upteams.tasktracker.task.service.interfaces.TaskService;
@@ -23,7 +24,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -57,6 +60,8 @@ public class TaskServiceImpl implements TaskService {
         entity.setProject(project);
         entity.setColumn(column);
         entity.setOrderIndex(getNextOrderIndex(column));
+        entity.setStatus(Optional.ofNullable(newTaskDto.status()).orElse(TaskStatus.NEW));
+        applyDueDate(entity, newTaskDto.dueDate());
 
         return mappingService.mapEntityToDto(repository.save(entity));
     }
@@ -133,6 +138,14 @@ public class TaskServiceImpl implements TaskService {
             if (!newColumn.equals(task.getColumn())) {
                 moveTaskToPosition(task, newColumn, Integer.MAX_VALUE);
             }
+        }
+
+        if (updateDto.status() != null) {
+            task.setStatus(updateDto.status());
+        }
+
+        if (updateDto.dueDate() != null && !Objects.equals(task.getDueDate(), updateDto.dueDate())) {
+            applyDueDate(task, updateDto.dueDate());
         }
 
         final Task updated = repository.save(task);
@@ -271,5 +284,11 @@ public class TaskServiceImpl implements TaskService {
         } catch (IllegalArgumentException ex) {
             throw new RestApiException(HttpStatus.BAD_REQUEST, errorMessage);
         }
+    }
+
+    private void applyDueDate(Task task, LocalDateTime dueDate) {
+        task.setDueDate(dueDate);
+        task.setDueDateReminder24Sent(false);
+        task.setDueDateReminder1Sent(false);
     }
 }

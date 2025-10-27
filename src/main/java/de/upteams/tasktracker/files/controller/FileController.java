@@ -13,4 +13,5 @@ public interface FileController {
             MultipartFile file,
             String userId
     );
+    ResponseEntity<String> deleteAvatar(String email);
 }
