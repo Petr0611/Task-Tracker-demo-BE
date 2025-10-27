@@ -2,6 +2,7 @@ package de.upteams.tasktracker.task.entity;
 
 import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.project.entity.Project;
+import de.upteams.tasktracker.taskcomment.entity.Comment;
 import de.upteams.tasktracker.utils.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -13,7 +14,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static de.upteams.tasktracker.utils.EntityUtil.getIdForToString;
@@ -81,6 +84,9 @@ public class Task extends BaseEntity {
 
     @Column(name = "due_date_reminder_1_sent", nullable = false)
     private boolean dueDateReminder1Sent;
+
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<Comment> comments = new ArrayList<>();
 
     public Task(String title, String description, Project project, TaskColumn column) {
         this.title = title;
