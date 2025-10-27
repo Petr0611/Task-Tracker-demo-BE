@@ -30,10 +30,12 @@ public class ProjectController implements ProjectApi {
 
     private final ProjectService service;
     private final ProjectRoleService projectRoleService;
+    private final ProjectService projectService;
 
-    public ProjectController(ProjectService service, ProjectRoleService projectRoleService) {
+    public ProjectController(ProjectService service, ProjectRoleService projectRoleService, ProjectService projectService) {
         this.service = service;
         this.projectRoleService = projectRoleService;
+        this.projectService = projectService;
     }
 
     @Override
@@ -90,5 +92,10 @@ public class ProjectController implements ProjectApi {
     @Override
     public RoleResponse getUserRole(String projectId, AuthUserDetails principal) {
         return projectRoleService.getUserRole(UUID.fromString(projectId), principal);
+    }
+
+    @Override
+    public List<ProjectResponseDto> getMyProjects(AuthUserDetails principal) {
+        return projectService.findAllByOwner(principal.user());
     }
 }

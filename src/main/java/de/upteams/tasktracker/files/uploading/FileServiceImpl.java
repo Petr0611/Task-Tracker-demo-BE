@@ -1,11 +1,13 @@
 package de.upteams.tasktracker.files.uploading;
 
 import de.upteams.tasktracker.configuration.AwsS3Configuration;
+import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
 import de.upteams.tasktracker.user.entity.AppUser;
 import de.upteams.tasktracker.user.service.UserService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -134,30 +136,63 @@ public class FileServiceImpl implements FileService {
             String key = String.format("avatars/%s_%s", userId, file.getOriginalFilename());
             InputStream inputStream = file.getInputStream();
             long size = file.getSize();
-            CompletableFuture<Boolean> future = uploadFileAsync(
+            boolean success = uploadFileAsync(
                     key,
                     inputStream,
                     Map.of("uploadedBy", userId),
                     file.getContentType(),
                     size,
                     true
-            );
-            boolean success = future.join();
+            ).join();
             if (!success) {
-                throw new RuntimeException("Upload failed for " + key);
+                throw new RestApiException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "File upload failed for key: " + key);
             }
-            String publicUrl = String.format("%s/%s/%s", config.getEndpoint(), config.getBucketName(), key);
+            String newAvatarUrl = String.format("%s/%s/%s",
+                    config.getEndpoint(),
+                    config.getBucketName(),
+                    key);
+            String oldUrl = user.getAvatarUrl();
 
+            if (oldUrl != null && !oldUrl.isBlank() && isExternalAvatar(oldUrl)) {
+                try {
+                    String oldKey = extractKeyFromUrl(oldUrl);
+                    deleteFile(oldKey);
+                    log.info("Deleted old external avatar {}: ", oldKey);
+                } catch (Exception e) {
+                    log.warn("Failed to delete old external avatar for user {}: {}", userId, e.getMessage());
+                }
+            }
 
-            user.setAvatarUrl(publicUrl);
+            user.setAvatarUrl(newAvatarUrl);
             userService.saveOrUpdate(user);
 
-            log.info("Uploaded '{}' to '{}'", key, publicUrl);
-            return publicUrl;
+            log.info("User {} avatar uploaded successfully", userId);
+            return newAvatarUrl;
 
         } catch (Exception e) {
             log.error("Error uploading avatar for user {}: {}", userId, e.getMessage(), e);
             throw new RuntimeException("Avatar uploadAvatar failed", e);
         }
+    }
+
+    private boolean isExternalAvatar(String avatarUrl) {
+        return avatarUrl.startsWith(config.getEndpoint());
+    }
+
+    private void deleteFile(String objKey) {
+        s3Client.deleteObject(builder -> builder
+                .bucket(config.getBucketName())
+                .key(objKey)
+        );
+        log.info("Deleted file from Server {}", objKey);
+    }
+
+    private String extractKeyFromUrl(String url) {
+        int index = url.indexOf("avatars/");
+        if (index == -1) {
+            throw new IllegalArgumentException("Cannot extract key from url: " + url);
+        }
+        return url.substring(index);
     }
 }
