@@ -85,6 +85,28 @@ public class EmailService {
         emailSender.sendEmail(sentTo, subject, body);
     }
 
+    @Async
+    public void sendCommentMentionNotification(
+            String sentTo,
+            String projectTitle,
+            String taskTitle,
+            String authorName,
+            String commentText,
+            String projectId,
+            String taskId
+    ) {
+        String sanitizedBase = frontendBaseUrl.replaceAll("/+$", "");
+        String taskLink = "%s/projects/%s/tasks/%s".formatted(sanitizedBase, projectId, taskId);
+        String subject = "Вас упомянули в задаче '" + taskTitle + "'";
+        String body = """
+                <p><strong>%s</strong> упомянул(а) вас в комментарии к задаче <strong>%s</strong> проекта <strong>%s</strong>.</p>
+                <p>Комментарий:</p>
+                <blockquote>%s</blockquote>
+                <p><a href="%s">Открыть задачу</a></p>
+                """.formatted(authorName, taskTitle, projectTitle, commentText, taskLink);
+        emailSender.sendEmail(sentTo, subject, body);
+    }
+
     private String buildFrontendLink(String path, String inviteToken) {
         String sanitizedBase = frontendBaseUrl.replaceAll("/+$", "");
         String sanitizedPath = path.startsWith("/") ? path : "/" + path;
