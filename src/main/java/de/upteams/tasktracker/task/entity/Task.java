@@ -55,6 +55,11 @@ public class Task extends BaseEntity {
     private TaskColumn column;
 
     @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private TaskStatus status = TaskStatus.NEW;
+
+    @NotNull
     @Min(0)
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex;
@@ -73,6 +78,7 @@ public class Task extends BaseEntity {
         this.project = project;
         this.column = column;
         this.orderIndex = 0;
+        this.status = TaskStatus.NEW;
     }
 
     public Task(String title, Project project, TaskColumn column) {
@@ -80,6 +86,7 @@ public class Task extends BaseEntity {
         this.project = project;
         this.column = column;
         this.orderIndex = 0;
+        this.status = TaskStatus.NEW;
     }
 
     @Override
@@ -89,6 +96,7 @@ public class Task extends BaseEntity {
                 ", executorsIds=" + getIdsForToString(executors) +
                 ", projectId=" + getIdForToString(project) +
                 ", columnId=" + getIdForToString(column) +
+                ", status=" + status +
                 ", orderIndex=" + orderIndex +
                 ", description='" + description + '\'' +
                 ", title='" + title + '\'' +

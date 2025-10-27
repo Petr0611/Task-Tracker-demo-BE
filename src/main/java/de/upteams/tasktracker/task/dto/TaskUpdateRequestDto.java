@@ -1,6 +1,7 @@
 package de.upteams.tasktracker.task.dto;
 
 import de.upteams.tasktracker.task.constants.TaskValidationConstats;
+import de.upteams.tasktracker.task.entity.TaskStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Pattern;
 
@@ -10,6 +11,7 @@ import jakarta.validation.constraints.Pattern;
  * @param title       New title of the Task
  * @param description New description of the Task
  * @param columnId    Identifier of the column the Task should be moved to
+ * @param status      New status of the Task
  */
 @Schema(description = "Request DTO for updating a Task")
 public record TaskUpdateRequestDto(
@@ -30,7 +32,13 @@ public record TaskUpdateRequestDto(
             example = "5b70c020-07a5-43c5-b4db-5bd4f72bae94"
     )
     @Pattern(regexp = TaskValidationConstats.UUID_PATTERN, message = TaskValidationConstats.COLUMN_ID_INVALID_MESSAGE)
-    String columnId
+        String columnId,
+
+        @Schema(
+                description = "New status of the Task",
+                example = "DONE"
+        )
+        TaskStatus status
 ) {
     }
 

@@ -1,6 +1,7 @@
 package de.upteams.tasktracker.task.dto;
 
 import de.upteams.tasktracker.task.constants.TaskValidationConstats;
+import de.upteams.tasktracker.task.entity.TaskStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -10,6 +11,7 @@ import jakarta.validation.constraints.Pattern;
  *
  * @param title       Title of the new task
  * @param description Description of the task
+ * @param status      Initial status of the task
  * @param columnId    Identifier of the column the task should belong to
  */
 @Schema(description = "Request DTO for creating a Task")
@@ -27,6 +29,12 @@ public record TaskCreateRequestDto(
         )
         @NotBlank
         String description,
+
+        @Schema(
+                description = "Initial status of the Task",
+                example = "NEW"
+        )
+        TaskStatus status,
 
         @Schema(
                 description = "Identifier of the column the Task should be placed into",

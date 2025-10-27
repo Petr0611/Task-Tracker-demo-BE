@@ -11,6 +11,7 @@ import de.upteams.tasktracker.task.dto.TaskDto;
 import de.upteams.tasktracker.task.dto.TaskMoveRequestDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.entity.Task;
+import de.upteams.tasktracker.task.entity.TaskStatus;
 import de.upteams.tasktracker.task.exception.TaskNotFoundException;
 import de.upteams.tasktracker.task.persistence.TaskRepository;
 import de.upteams.tasktracker.task.service.interfaces.TaskService;
@@ -57,6 +58,7 @@ public class TaskServiceImpl implements TaskService {
         entity.setProject(project);
         entity.setColumn(column);
         entity.setOrderIndex(getNextOrderIndex(column));
+        entity.setStatus(Optional.ofNullable(newTaskDto.status()).orElse(TaskStatus.NEW));
 
         return mappingService.mapEntityToDto(repository.save(entity));
     }
@@ -133,6 +135,10 @@ public class TaskServiceImpl implements TaskService {
             if (!newColumn.equals(task.getColumn())) {
                 moveTaskToPosition(task, newColumn, Integer.MAX_VALUE);
             }
+        }
+
+        if (updateDto.status() != null) {
+            task.setStatus(updateDto.status());
         }
 
         final Task updated = repository.save(task);

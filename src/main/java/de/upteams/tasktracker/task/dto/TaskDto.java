@@ -2,6 +2,8 @@ package de.upteams.tasktracker.task.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
+import de.upteams.tasktracker.task.constants.TaskValidationConstats;
+import de.upteams.tasktracker.task.entity.TaskStatus;
 import de.upteams.tasktracker.user.dto.EmployeeDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Value;
@@ -44,6 +46,12 @@ public class TaskDto {
             accessMode = Schema.AccessMode.READ_ONLY
     )
     String columnTitle;
+
+    @Schema(
+            description = "Current status of the Task",
+            example = "IN_PROGRESS"
+    )
+    TaskStatus status;
 
     @Schema(
             description = "Order index of the task inside its column",
