@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * @author Oleg Mordkovich
@@ -37,7 +36,7 @@ public class FileControllerImpl implements FileController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Avatar uploaded successfully",
                     content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE,
-                            schema = @Schema(example = "https://cdn.example.com/avatars/user123_avatar.png"))),
+                            schema = @Schema(example = "https://cdn.example.com/avatars/upload/user123@mail.com_avatar1.png"))),
             @ApiResponse(responseCode = "400", description = "Invalid file or parameters",
                     content = @Content),
             @ApiResponse(responseCode = "401", description = "Unauthorized - login required",
@@ -61,13 +60,36 @@ public class FileControllerImpl implements FileController {
             @Parameter(description = "Avatar image file (JPG or PNG, max 5MB)",
                     required = true)
             @RequestPart("file") MultipartFile file,
-            @Parameter(description = "User email or ID", example = "user@example.com")
-            @RequestParam String userId
+            @Parameter(description = "User email", example = "user@example.com")
+            @RequestParam String email
     ) {
         validateFile(file);
-        String url = fileService.uploadAvatar(file, userId);
+        String url = fileService.uploadAvatar(file, email);
         return ResponseEntity.ok(url);
     }
+
+    @Override
+    @DeleteMapping("/delete")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(
+            summary = "Delete existing user avatar",
+            description = "Removes the user's avatar from cloud and resets avatarUrl in the database."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Avatar deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "User or avatar not found"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - login required"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<String> deleteAvatar(@RequestParam String email) {
+        try {
+            fileService.deleteUserAvatar(email);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            throw new RestApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete avatar");
+        }
+    }
+
 
     private void validateFile(MultipartFile file) {
         String contentType = file.getContentType();
