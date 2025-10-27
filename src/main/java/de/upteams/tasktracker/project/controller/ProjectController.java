@@ -9,13 +9,13 @@ import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.dto.response.RoleResponse;
-import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.project.service.ProjectRoleService;
 import de.upteams.tasktracker.project.service.interfaces.ProjectService;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -24,6 +24,7 @@ import java.util.UUID;
 /**
  * REST Controller that receives http-requests for various operations with Projects
  */
+@RequestMapping("/api/v1/projects")
 @RestController
 public class ProjectController implements ProjectApi {
 

@@ -93,11 +93,15 @@ public class SecurityConfig {
 
 
                         // временно разрешаем создание проекта без авторизации
-                        .requestMatchers(HttpMethod.POST, "/api/v1/projects").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/projects/my").authenticated()
 
                         // reset пароля
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password-request").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/v1/projects/*/invitations").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/invitations/accept").permitAll()
+
 
 
 
@@ -115,7 +119,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(List.of("http://localhost:3000"));
+        cfg.setAllowedOrigins(List.of("http://localhost:5173"));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
         cfg.setAllowCredentials(true);
