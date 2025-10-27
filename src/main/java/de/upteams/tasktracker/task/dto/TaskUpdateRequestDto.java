@@ -3,7 +3,10 @@ package de.upteams.tasktracker.task.dto;
 import de.upteams.tasktracker.task.constants.TaskValidationConstats;
 import de.upteams.tasktracker.task.entity.TaskStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Pattern;
+
+import java.time.LocalDateTime;
 
 /**
  * DTO for updating a Task
@@ -12,6 +15,7 @@ import jakarta.validation.constraints.Pattern;
  * @param description New description of the Task
  * @param columnId    Identifier of the column the Task should be moved to
  * @param status      New status of the Task
+ * @param dueDate     Updated deadline of the task
  */
 @Schema(description = "Request DTO for updating a Task")
 public record TaskUpdateRequestDto(
@@ -38,7 +42,14 @@ public record TaskUpdateRequestDto(
                 description = "New status of the Task",
                 example = "DONE"
         )
-        TaskStatus status
+        TaskStatus status,
+
+        @Schema(
+                description = "Updated deadline of the Task",
+                example = "2024-05-01T18:00:00"
+        )
+        @Future(message = TaskValidationConstats.DUE_DATE_INVALID_MESSAGE)
+        LocalDateTime dueDate
 ) {
     }
 

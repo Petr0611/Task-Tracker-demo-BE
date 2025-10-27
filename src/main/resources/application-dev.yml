@@ -43,6 +43,9 @@ confirmation:
 app:
   base-url: ${BASE_URL:http://localhost:8080}
   frontend-url: ${FRONTEND_BASE_URL:${BASE_URL}}
+  task-reminder:
+    enabled: ${TASK_REMINDER_ENABLED:true}
+    check-interval: ${TASK_REMINDER_CHECK_INTERVAL:900000}
 
 digitalocean:
   spaces:
