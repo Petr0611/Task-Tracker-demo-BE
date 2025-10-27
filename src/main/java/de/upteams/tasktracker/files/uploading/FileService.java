@@ -66,5 +66,7 @@ public interface FileService {
             Long contentLength,
             boolean isPublicRead
     );
-    String uploadAvatar(MultipartFile file, String use);
+    String uploadAvatar(MultipartFile file, String email);
+
+    void deleteUserAvatar(String email);
 }
