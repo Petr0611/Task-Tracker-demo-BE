@@ -8,6 +8,7 @@ import de.upteams.tasktracker.task.dto.TaskCreateRequestDto;
 import de.upteams.tasktracker.task.dto.TaskDto;
 import de.upteams.tasktracker.task.dto.TaskMoveRequestDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
+import de.upteams.tasktracker.task.entity.TaskStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -22,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Tag(name = "Task controller")
@@ -103,6 +105,23 @@ public interface TaskApi {
                     schema = @Schema(pattern = TaskValidationConstats.UUID_PATTERN)
             )
             String projectId,
+
+            @RequestParam(required = false)
+            @Parameter(description = "Task status filter")
+            TaskStatus status,
+
+            @RequestParam(required = false)
+            @Parameter(description = "Identifier of the executor assigned to the task")
+            String executorId,
+
+            @RequestParam(required = false)
+            @Parameter(description = "Filter tasks due before the provided date")
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime dueBefore,
+
+            @RequestParam(required = false)
+            @Parameter(description = "Sort tasks by the provided field")
+            String sortBy,
 
             @AuthenticationPrincipal
             @Parameter(hidden = true)

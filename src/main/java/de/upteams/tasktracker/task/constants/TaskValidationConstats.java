@@ -15,6 +15,10 @@ public final class TaskValidationConstats {
 
     public static final String DUE_DATE_INVALID_MESSAGE = "Due date must be in the future";
 
+    public static final String EXECUTOR_ID_INVALID_MESSAGE = "Executor ID must be a valid UUID";
+
+    public static final String SORT_BY_INVALID_MESSAGE = "Unsupported sort field";
+
     private TaskValidationConstats() {
         throw new IllegalStateException("Utility class");
     }
