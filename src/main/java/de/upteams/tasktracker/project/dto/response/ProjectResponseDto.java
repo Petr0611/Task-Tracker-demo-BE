@@ -1,6 +1,7 @@
 package de.upteams.tasktracker.project.dto.response;
 
 import de.upteams.tasktracker.invitation.dto.InvitationAcceptResponseDto;
+import de.upteams.tasktracker.invitation.dto.ProjectInvitationDto;
 import de.upteams.tasktracker.user.dto.EmployeeDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -51,7 +52,8 @@ public record ProjectResponseDto(
         List<MemberDto> members,
 
         @Schema(description = "List of pending invitations for the project")
-        List<InvitationAcceptResponseDto> invitations
-        ) {
+        List<ProjectInvitationDto> invitations
+
+) {
 
 }
