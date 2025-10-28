@@ -18,4 +18,6 @@ public interface InvitationRepository extends JpaRepository<Invitation, UUID> {
     List<Invitation> findAllByEmailAndStatus(String email, InvitationStatus status);
 
     Optional<Invitation> findByInviteToken(String inviteToken);
+
+    List<Invitation> findAllByProjectId(UUID projectId);
 }

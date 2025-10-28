@@ -2,10 +2,14 @@ package de.upteams.tasktracker.project.service.impl;
 
 import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.collaborator.dto.UpdateCollaboratorRolesDto;
+import de.upteams.tasktracker.collaborator.entity.CollaboratorStatus;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
+import de.upteams.tasktracker.invitation.dto.InvitationAcceptResponseDto;
 import de.upteams.tasktracker.invitation.dto.ProjectInvitationResponseDto;
+import de.upteams.tasktracker.invitation.entity.Invitation;
+import de.upteams.tasktracker.invitation.persistence.InvitationRepository;
 import de.upteams.tasktracker.invitation.service.interfaces.InvitationService;
 import de.upteams.tasktracker.project.dto.request.ProjectCollaboratorAddRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
@@ -28,6 +32,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Service for various operations with Projects
@@ -41,29 +46,54 @@ public class ProjectServiceImpl implements ProjectService {
     private final CollaboratorService collaboratorService;
     private final InvitationService invitationService;
     private final UserService userService;
+    private final InvitationRepository invitationRepository;
 
     @Transactional
     @Override
     public ProjectResponseDto save(ProjectCreateDto newProjectDto, AppUser projectOwner) {
+        // Создаём сущность Project из DTO
         Project project = mappingService.mapDtoToEntity(newProjectDto);
         project.setOwner(projectOwner);
+
+        // Сохраняем проект в репозитории
         Project savedProject = repository.save(project);
 
+        // Добавляем владельца как коллаборатора с ролью OWNER
         collaboratorService.addCollaborator(
                 projectOwner,
                 savedProject,
                 Set.of(ProjectRoles.OWNER)
         );
 
+        // Получаем DTO с уже замаппленными полями (id, title, description, owner, members)
         ProjectResponseDto baseDto = mappingService.mapEntityToDto(savedProject);
+
+        // Формируем DTO с корректными приглашениями
+        List<InvitationAcceptResponseDto> invitationDtos = project.getInvitations().stream()
+                .map(inv -> new InvitationAcceptResponseDto(
+                        inv.getProject().getId().toString(),   // projectId
+                        inv.getProject().getTitle(),           // projectTitle
+                        switch (inv.getStatus()) {             // collaboratorStatus
+                            case PENDING -> CollaboratorStatus.PENDING;
+                            case USED -> CollaboratorStatus.ACTIVE;
+                        },
+                        inv.getRole()                          // role
+                ))
+                .toList();
+
+
+        // Возвращаем финальный ProjectResponseDto
         return new ProjectResponseDto(
                 baseDto.id(),
                 baseDto.title(),
                 baseDto.description(),
                 baseDto.owner(),
-                true
+                true,
+                baseDto.members(),
+                invitationDtos
         );
     }
+
 
     @Override
     public ProjectResponseDto getById(String id) {
@@ -88,12 +118,32 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<ProjectResponseDto> findAllByOwner(AppUser owner) {
-        return repository
-                .findAllByOwner(owner)
+        return repository.findAllByOwner(owner)
                 .stream()
-                .map(mappingService::mapEntityToDto)
+                .map(project -> {
+                    // Маппим проект в DTO через MapStruct
+                    ProjectResponseDto dto = mappingService.mapEntityToDto(project);
+
+                    // Берём все приглашения проекта и маппим их в DTO
+                    List<InvitationAcceptResponseDto> invitationDtos = mappingService
+                            .mapInvitationsToDto(project.getInvitations());
+
+                    // Создаём новый DTO с подставленными приглашениями
+                    return new ProjectResponseDto(
+                            dto.id(),
+                            dto.title(),
+                            dto.description(),
+                            dto.owner(),
+                            dto.ownerAssigned(),
+                            dto.members(),
+                            invitationDtos
+                    );
+                })
                 .toList();
     }
+
+
+
 
 
 

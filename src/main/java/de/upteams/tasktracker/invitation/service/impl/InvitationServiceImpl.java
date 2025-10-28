@@ -79,6 +79,7 @@ public class InvitationServiceImpl implements InvitationService {
 
     @Override
     @Transactional
+
     public InvitationAcceptanceResult acceptInvitation(String inviteToken, AppUser currentUser) {
         if (inviteToken == null || inviteToken.isBlank()) {
             log.warn("Empty or null invitation token received by user {}", currentUser.getEmail());
