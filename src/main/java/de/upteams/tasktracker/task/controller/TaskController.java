@@ -2,16 +2,15 @@ package de.upteams.tasktracker.task.controller;
 
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import de.upteams.tasktracker.task.controller.api.TaskApi;
-import de.upteams.tasktracker.task.dto.TaskCreateRequestDto;
-import de.upteams.tasktracker.task.dto.TaskDto;
-import de.upteams.tasktracker.task.dto.TaskMoveRequestDto;
-import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
+import de.upteams.tasktracker.task.dto.*;
+import de.upteams.tasktracker.task.entity.TaskStatus;
 import de.upteams.tasktracker.task.service.interfaces.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -44,9 +43,14 @@ public class TaskController implements TaskApi {
     @Override
     public List<TaskDto> getAll(
             String projectId,
+            TaskStatus status,
+            String executorId,
+            LocalDateTime dueBefore,
+            String sortBy,
             AuthUserDetails principal
     ) {
-        return service.getAll(projectId, principal.user());
+        final TaskFilterParams filterParams = new TaskFilterParams(status, executorId, dueBefore, sortBy);
+        return service.getAll(projectId, filterParams, principal.user());
     }
 
     @Override
