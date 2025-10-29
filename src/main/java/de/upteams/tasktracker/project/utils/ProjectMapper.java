@@ -43,8 +43,8 @@ public interface ProjectMapper {
                 .map(c -> new MemberDto(
                         c.getAppUser().getId(),
                         c.getAppUser().getDisplayName(),
-                        c.getProjectRolesSet().stream().findFirst().map(Enum::name).orElse("MEMBER")
-
+                        c.getProjectRolesSet().stream().findFirst().map(Enum::name).orElse("MEMBER"),
+                        c.getAppUser().getAvatarUrl()
                 ))
                 .toList();
     }
