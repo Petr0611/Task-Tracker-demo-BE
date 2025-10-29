@@ -3,6 +3,7 @@ package de.upteams.tasktracker.project.utils;
 import de.upteams.tasktracker.collaborator.entity.CollaboratorStatus;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.invitation.dto.InvitationAcceptResponseDto;
+import de.upteams.tasktracker.invitation.dto.ProjectInvitationDto;
 import de.upteams.tasktracker.invitation.entity.Invitation;
 import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
 import de.upteams.tasktracker.project.dto.response.MemberDto;
@@ -49,20 +50,20 @@ public interface ProjectMapper {
     }
 
     @Named("mapInvitationsToDto")
-    default List<InvitationAcceptResponseDto> mapInvitationsToDto(Set<Invitation> invitations) {
+    default List<ProjectInvitationDto> mapInvitationsToDto(Set<Invitation> invitations) {
         if (invitations == null) return List.of();
         return invitations.stream()
-                .map(inv -> new InvitationAcceptResponseDto(
-                        inv.getProject() != null ? inv.getProject().getId().toString() : null,
-                        inv.getProject() != null ? inv.getProject().getTitle() : null,
+                .map(inv -> new ProjectInvitationDto(
+                        inv.getEmail(), // ← теперь email
+                        inv.getRole(),
                         switch (inv.getStatus()) {
                             case PENDING -> CollaboratorStatus.PENDING;
                             case USED -> CollaboratorStatus.ACTIVE;
-                            default -> CollaboratorStatus.PENDING; // или MEMBER
-                        },
-                        inv.getRole()
+                            default -> CollaboratorStatus.PENDING;
+                        }
                 ))
                 .toList();
+
     }
 
 
