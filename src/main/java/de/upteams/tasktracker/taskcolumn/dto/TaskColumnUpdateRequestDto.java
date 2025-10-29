@@ -20,6 +20,9 @@ public record TaskColumnUpdateRequestDto(
 
         @Schema(description = "New order index for the column", example = "3")
         @Min(0)
-        Integer orderIndex
+        Integer orderIndex,
+
+        @Schema(description = "Flag that marks the column as protected from deletion", example = "true")
+        Boolean baseColumn
 ) {
 }
