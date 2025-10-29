@@ -44,6 +44,8 @@ import java.util.*;
 public class TaskServiceImpl implements TaskService {
 
     private static final String COLUMN_PROJECT_MISMATCH_MESSAGE = "Column does not belong to the specified project";
+    private static final String TASK_PROJECT_NOT_ASSIGNED_MESSAGE = "Task is not associated with any project";
+    private static final String TASKS_NOT_PROVIDED_MESSAGE = "At least one task must be provided";
 
     private final TaskRepository repository;
     private final TaskMappingService mappingService;
@@ -223,6 +225,53 @@ public class TaskServiceImpl implements TaskService {
         log.info("Attachment {} successfully added to task {} by user {}",
                 attachment, taskId, requester.getEmail());
         return mappingService.mapEntityToDto(task);
+    @Transactional
+    public List<TaskDto> bulkMoveTasks(TaskBulkMoveRequestDto requestDto, AppUser changer) {
+        final List<Task> tasksToMove = resolveTasksInRequestedOrder(requestDto.taskIds());
+        if (tasksToMove.isEmpty()) {
+            throw new RestApiException(HttpStatus.BAD_REQUEST, TASKS_NOT_PROVIDED_MESSAGE);
+        }
+
+        final TaskColumn targetColumn = getColumnOrThrow(requestDto.targetColumnId());
+        final Project targetProject = targetColumn.getProject();
+        ensureColumnBelongsToProject(targetColumn, targetProject);
+
+        enforceTaskManagementPermission(targetProject, changer);
+        enforceTaskManagementPermissionForTasks(tasksToMove, changer);
+
+        final List<Task> targetColumnTasks = new ArrayList<>(repository.findAllByColumnOrderByOrderIndexAsc(targetColumn));
+        final Map<UUID, List<Task>> sourceColumns = detachTasksFromSourceColumns(tasksToMove, targetColumn);
+
+        final Set<UUID> movingTaskIds = tasksToMove.stream()
+                .map(Task::getId)
+                .collect(LinkedHashSet::new, Set::add, Set::addAll);
+        targetColumnTasks.removeIf(task -> movingTaskIds.contains(task.getId()));
+
+        int insertionIndex = requestDto.startOrderIndex() != null ? requestDto.startOrderIndex() : targetColumnTasks.size();
+        insertionIndex = Math.max(insertionIndex, 0);
+        insertionIndex = Math.min(insertionIndex, targetColumnTasks.size());
+
+        for (Task task : tasksToMove) {
+            task.setColumn(targetColumn);
+            task.setProject(targetProject);
+            targetColumnTasks.add(insertionIndex, task);
+            insertionIndex++;
+        }
+
+        reindexTasks(targetColumnTasks);
+        repository.saveAll(targetColumnTasks);
+
+        for (List<Task> tasks : sourceColumns.values()) {
+            if (tasks.isEmpty()) {
+                continue;
+            }
+            reindexTasks(tasks);
+            repository.saveAll(tasks);
+        }
+
+        return tasksToMove.stream()
+                .map(mappingService::mapEntityToDto)
+                .toList();
     }
 
     @Override
@@ -249,6 +298,71 @@ public class TaskServiceImpl implements TaskService {
         task.getAttachments().remove(attachment);
         taskRepository.save(task);
         log.info("Attachment {} removed from task {}", attachmentId, taskId);
+    public List<TaskDto> bulkUpdateStatus(TaskBulkStatusUpdateRequestDto requestDto, AppUser changer) {
+        final List<Task> tasksToUpdate = resolveTasksInRequestedOrder(requestDto.taskIds());
+        if (tasksToUpdate.isEmpty()) {
+            throw new RestApiException(HttpStatus.BAD_REQUEST, TASKS_NOT_PROVIDED_MESSAGE);
+        }
+
+        enforceTaskManagementPermissionForTasks(tasksToUpdate, changer);
+
+        for (Task task : tasksToUpdate) {
+            task.setStatus(requestDto.status());
+        }
+
+        repository.saveAll(tasksToUpdate);
+
+        return tasksToUpdate.stream()
+                .map(mappingService::mapEntityToDto)
+                .toList();
+    }
+
+    private List<Task> resolveTasksInRequestedOrder(List<String> taskIds) {
+        if (taskIds == null || taskIds.isEmpty()) {
+            return List.of();
+        }
+
+        final Map<UUID, Task> orderedTasks = new LinkedHashMap<>();
+        for (String rawId : taskIds) {
+            final Task task = getOrThrow(rawId);
+            orderedTasks.putIfAbsent(task.getId(), task);
+        }
+
+        return new ArrayList<>(orderedTasks.values());
+    }
+
+    private void enforceTaskManagementPermissionForTasks(List<Task> tasks, AppUser user) {
+        final Set<Project> projects = new LinkedHashSet<>();
+
+        for (Task task : tasks) {
+            final Project project = task.getProject();
+            if (project == null) {
+                throw new RestApiException(HttpStatus.BAD_REQUEST, TASK_PROJECT_NOT_ASSIGNED_MESSAGE);
+            }
+
+            if (projects.add(project)) {
+                enforceTaskManagementPermission(project, user);
+            }
+        }
+    }
+
+    private Map<UUID, List<Task>> detachTasksFromSourceColumns(List<Task> tasks, TaskColumn targetColumn) {
+        final Map<UUID, List<Task>> sourceColumns = new HashMap<>();
+
+        for (Task task : tasks) {
+            final TaskColumn sourceColumn = task.getColumn();
+            if (sourceColumn == null || sourceColumn.equals(targetColumn)) {
+                continue;
+            }
+
+            final UUID sourceColumnId = sourceColumn.getId();
+            final List<Task> snapshot = sourceColumns.computeIfAbsent(sourceColumnId, id ->
+                    new ArrayList<>(repository.findAllByColumnOrderByOrderIndexAsc(sourceColumn))
+            );
+            snapshot.removeIf(existing -> existing.getId().equals(task.getId()));
+        }
+
+        return sourceColumns;
     }
 
     private void enforceProjectAccess(final Project project, final AppUser user) {

@@ -7,8 +7,10 @@ import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
 import de.upteams.tasktracker.invitation.dto.InvitationAcceptResponseDto;
+import de.upteams.tasktracker.invitation.dto.ProjectInvitationDto;
 import de.upteams.tasktracker.invitation.dto.ProjectInvitationResponseDto;
 import de.upteams.tasktracker.invitation.entity.Invitation;
+import de.upteams.tasktracker.invitation.entity.InvitationStatus;
 import de.upteams.tasktracker.invitation.persistence.InvitationRepository;
 import de.upteams.tasktracker.invitation.service.interfaces.InvitationService;
 import de.upteams.tasktracker.project.dto.request.ProjectCollaboratorAddRequestDto;
@@ -69,15 +71,11 @@ public class ProjectServiceImpl implements ProjectService {
         ProjectResponseDto baseDto = mappingService.mapEntityToDto(savedProject);
 
         // Формируем DTO с корректными приглашениями
-        List<InvitationAcceptResponseDto> invitationDtos = project.getInvitations().stream()
-                .map(inv -> new InvitationAcceptResponseDto(
-                        inv.getProject().getId().toString(),   // projectId
-                        inv.getProject().getTitle(),           // projectTitle
-                        switch (inv.getStatus()) {             // collaboratorStatus
-                            case PENDING -> CollaboratorStatus.PENDING;
-                            case USED -> CollaboratorStatus.ACTIVE;
-                        },
-                        inv.getRole()                          // role
+        List<ProjectInvitationDto> invitationDtos = project.getInvitations().stream()
+                .map(inv -> new ProjectInvitationDto(
+                        inv.getEmail(),
+                        inv.getRole(),
+                        inv.getStatus()  == InvitationStatus.USED ? CollaboratorStatus.ACTIVE : CollaboratorStatus.PENDING                         // role
                 ))
                 .toList();
 
@@ -125,7 +123,7 @@ public class ProjectServiceImpl implements ProjectService {
                     ProjectResponseDto dto = mappingService.mapEntityToDto(project);
 
                     // Берём все приглашения проекта и маппим их в DTO
-                    List<InvitationAcceptResponseDto> invitationDtos = mappingService
+                    List<ProjectInvitationDto> invitationDtos = mappingService
                             .mapInvitationsToDto(project.getInvitations());
 
                     // Создаём новый DTO с подставленными приглашениями

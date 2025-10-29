@@ -31,6 +31,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TaskColumnServiceImpl implements TaskColumnService {
 
+    private static final String BASE_COLUMN_DELETE_FORBIDDEN_MESSAGE = "Base columns cannot be deleted";
+    private static final String COLUMN_MANAGE_FORBIDDEN_MESSAGE = "Only project owner can manage columns";
+
     private final TaskColumnRepository repository;
     private final TaskColumnMappingService mappingService;
     private final ProjectService projectService;
@@ -78,6 +81,10 @@ public class TaskColumnServiceImpl implements TaskColumnService {
         if (requestDto.orderIndex() != null) {
             column.setOrderIndex(requestDto.orderIndex());
         }
+        if (requestDto.baseColumn() != null) {
+            enforceOwnerPermission(column.getProject(), changer);
+            column.setBaseColumn(requestDto.baseColumn());
+        }
 
         return mappingService.mapEntityToDto(repository.save(column));
     }
@@ -86,7 +93,11 @@ public class TaskColumnServiceImpl implements TaskColumnService {
     @Transactional
     public void delete(String id, AppUser changer) {
         final TaskColumn column = getOrThrow(id);
-        enforceTaskManagementPermission(column.getProject(), changer);
+        enforceOwnerPermission(column.getProject(), changer);
+
+        if (column.isBaseColumn()) {
+            throw new RestApiException(HttpStatus.BAD_REQUEST, BASE_COLUMN_DELETE_FORBIDDEN_MESSAGE);
+        }
         repository.delete(column);
     }
 
@@ -132,6 +143,12 @@ public class TaskColumnServiceImpl implements TaskColumnService {
         );
         if (!hasPermission) {
             throw new RestApiException(HttpStatus.FORBIDDEN, "User has no access to this project");
+        }
+    }
+
+    private void enforceOwnerPermission(Project project, AppUser user) {
+        if (!isProjectOwner(project, user)) {
+            throw new RestApiException(HttpStatus.FORBIDDEN, COLUMN_MANAGE_FORBIDDEN_MESSAGE);
         }
     }
 

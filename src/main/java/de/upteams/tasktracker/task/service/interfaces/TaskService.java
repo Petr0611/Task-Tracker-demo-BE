@@ -39,4 +39,9 @@ public interface TaskService {
 
     void deleteAttachmentFromTask(String taskId, String attachmentId);
 
+    List<TaskDto> bulkMoveTasks(TaskBulkMoveRequestDto requestDto, AppUser changer);
+
+    List<TaskDto> bulkUpdateStatus(TaskBulkStatusUpdateRequestDto requestDto, AppUser changer);
+
+
 }
