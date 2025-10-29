@@ -30,4 +30,10 @@ public interface TaskService {
 
     TaskDto moveTask(String id, TaskMoveRequestDto moveDto, AppUser changer);
 
+
+    List<TaskDto> bulkMoveTasks(TaskBulkMoveRequestDto requestDto, AppUser changer);
+
+    List<TaskDto> bulkUpdateStatus(TaskBulkStatusUpdateRequestDto requestDto, AppUser changer);
+
+
 }
