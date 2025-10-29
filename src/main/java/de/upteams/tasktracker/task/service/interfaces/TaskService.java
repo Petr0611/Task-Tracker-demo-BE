@@ -5,6 +5,7 @@ import de.upteams.tasktracker.task.dto.TaskDto;
 import de.upteams.tasktracker.task.dto.TaskMoveRequestDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.entity.Attachment;
+import de.upteams.tasktracker.task.dto.*;
 import de.upteams.tasktracker.task.entity.Task;
 import de.upteams.tasktracker.user.entity.AppUser;
 
@@ -24,7 +25,7 @@ public interface TaskService {
 
     Optional<Task> findById(String id);
 
-    List<TaskDto> getAll(String projectId, AppUser authUser);
+    List<TaskDto> getAll(String projectId, TaskFilterParams filterParams, AppUser authUser);
 
     List<TaskDto> getAllByColumn(String columnId, AppUser authUser);
 

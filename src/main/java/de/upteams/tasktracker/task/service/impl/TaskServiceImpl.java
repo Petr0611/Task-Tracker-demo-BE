@@ -12,10 +12,12 @@ import de.upteams.tasktracker.task.dto.TaskDto;
 import de.upteams.tasktracker.task.dto.TaskMoveRequestDto;
 import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
 import de.upteams.tasktracker.task.entity.Attachment;
+import de.upteams.tasktracker.task.dto.*;
 import de.upteams.tasktracker.task.entity.Task;
 import de.upteams.tasktracker.task.entity.TaskStatus;
 import de.upteams.tasktracker.task.exception.TaskNotFoundException;
 import de.upteams.tasktracker.task.persistence.TaskRepository;
+import de.upteams.tasktracker.task.persistence.TaskSpecifications;
 import de.upteams.tasktracker.task.service.interfaces.TaskService;
 import de.upteams.tasktracker.task.utils.TaskMappingService;
 import de.upteams.tasktracker.taskcolumn.entity.TaskColumn;
@@ -23,6 +25,8 @@ import de.upteams.tasktracker.taskcolumn.service.interfaces.TaskColumnService;
 import de.upteams.tasktracker.user.entity.AppUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,11 +94,35 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public List<TaskDto> getAll(final String projectId, final AppUser authUser) {
+    public List<TaskDto> getAll(final String projectId,
+                                final TaskFilterParams filterParams,
+                                final AppUser authUser) {
         final Project project = getProjectOrThrow(projectId);
         enforceProjectAccess(project, authUser);
+        final TaskFilterParams safeFilter = filterParams == null
+                ? new TaskFilterParams(null, null, null, null)
+                : filterParams;
+
+        final UUID executorId = resolveExecutorId(safeFilter.executorId());
+
+        Specification<Task> specification = TaskSpecifications.belongsToProject(project);
+
+        if (safeFilter.status() != null) {
+            specification = specification.and(TaskSpecifications.hasStatus(safeFilter.status()));
+        }
+
+        if (executorId != null) {
+            specification = specification.and(TaskSpecifications.hasExecutor(executorId));
+        }
+
+        if (safeFilter.dueBefore() != null) {
+            specification = specification.and(TaskSpecifications.dueBefore(safeFilter.dueBefore()));
+        }
+
+        final Sort sort = resolveSort(safeFilter.sortBy());
+
         return repository
-                .findByProject(project)
+                .findAll(specification, sort)
                 .stream()
                 .map(mappingService::mapEntityToDto)
                 .toList();
@@ -323,6 +351,27 @@ public class TaskServiceImpl implements TaskService {
         for (int i = 0; i < tasks.size(); i++) {
             tasks.get(i).setOrderIndex(i);
         }
+    }
+
+    private UUID resolveExecutorId(String executorId) {
+        if (executorId == null || executorId.isBlank()) {
+            return null;
+        }
+        return parseUuid(executorId, TaskValidationConstats.EXECUTOR_ID_INVALID_MESSAGE);
+    }
+
+    private Sort resolveSort(String sortBy) {
+        if (sortBy == null || sortBy.isBlank()) {
+            return Sort.by(Sort.Direction.ASC, "orderIndex");
+        }
+
+        return switch (sortBy.trim().toLowerCase(Locale.ROOT)) {
+            case "title" -> Sort.by(Sort.Direction.ASC, "title");
+            case "status" -> Sort.by(Sort.Direction.ASC, "status");
+            case "duedate", "due_date" -> Sort.by(Sort.Direction.ASC, "dueDate");
+            case "orderindex", "order_index" -> Sort.by(Sort.Direction.ASC, "orderIndex");
+            default -> throw new RestApiException(HttpStatus.BAD_REQUEST, TaskValidationConstats.SORT_BY_INVALID_MESSAGE);
+        };
     }
 
     private UUID parseUuid(final String rawId, final String errorMessage) {

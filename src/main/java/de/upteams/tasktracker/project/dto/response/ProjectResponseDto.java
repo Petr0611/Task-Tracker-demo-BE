@@ -1,7 +1,10 @@
 package de.upteams.tasktracker.project.dto.response;
 
+import de.upteams.tasktracker.invitation.dto.InvitationAcceptResponseDto;
 import de.upteams.tasktracker.user.dto.EmployeeDto;
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.util.List;
 
 /**
  * Project DTO
@@ -42,7 +45,13 @@ public record ProjectResponseDto(
                 description = "Flag that shows if the creator was automatically assigned as OWNER",
                 example = "true"
         )
-        boolean ownerAssigned
+        boolean ownerAssigned,
+
+        @Schema(description = "List of project members")
+        List<MemberDto> members,
+
+        @Schema(description = "List of pending invitations for the project")
+        List<InvitationAcceptResponseDto> invitations
         ) {
 
 }
