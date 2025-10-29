@@ -1,6 +1,7 @@
 package de.upteams.tasktracker.project.entity;
 
 import de.upteams.tasktracker.collaborator.entity.Collaborator;
+import de.upteams.tasktracker.invitation.entity.Invitation;
 import de.upteams.tasktracker.project.constants.ProjectValidationConstats;
 import de.upteams.tasktracker.task.entity.Task;
 import de.upteams.tasktracker.taskcolumn.entity.TaskColumn;
@@ -67,15 +68,20 @@ public class Project extends BaseEntity {
         this.owner = owner;
     }
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<Invitation> invitations = new HashSet<>();
+
+
     @Override
     public String toString() {
         return "Project{" +
-                "id=" + getId() +
+                "columns=" + columns +
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
-                ", authorId=" + getIdForToString(owner) +
-                ", columnIds=" + getIdsForToString(columns) +
-                ", tasksIds=" + getIdsForToString(tasks) +
+                ", owner=" + owner +
+                ", projectTeam=" + projectTeam +
+                ", tasks=" + tasks +
+                ", invitations=" + invitations +
                 '}';
     }
 }

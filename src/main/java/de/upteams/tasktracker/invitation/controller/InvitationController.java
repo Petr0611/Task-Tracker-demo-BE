@@ -27,7 +27,8 @@ public class InvitationController implements InvitationApi {
         return new InvitationAcceptResponseDto(
                 result.invitation().getProject().getId().toString(),
                 result.invitation().getProject().getTitle(),
-                result.collaborator().getStatus()
+                result.collaborator().getStatus(),
+                result.invitation().getRole()
         );
     }
 }
