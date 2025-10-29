@@ -11,5 +11,7 @@ public record MemberDto(
         String name,
 
         @Schema(description = "Role in project", example = "MEMBER")
-        String role
+        String role,
+
+        String avatarUrl
 ) {}
