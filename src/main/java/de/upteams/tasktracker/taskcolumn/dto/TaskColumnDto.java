@@ -33,6 +33,10 @@ public class TaskColumnDto {
     )
     String projectId;
 
+    @Schema(description = "Indicates whether the column is protected from deletion", example = "true")
+    boolean baseColumn;
+
+
     @Schema(
             description = "Tasks that belong to this column",
             accessMode = Schema.AccessMode.READ_ONLY

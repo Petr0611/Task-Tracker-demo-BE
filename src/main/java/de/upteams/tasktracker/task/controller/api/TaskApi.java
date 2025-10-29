@@ -4,10 +4,7 @@ import de.upteams.tasktracker.exception.handling.response.ErrorResponseDto;
 import de.upteams.tasktracker.exception.handling.response.ValidationErrorDto;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
 import de.upteams.tasktracker.task.constants.TaskValidationConstats;
-import de.upteams.tasktracker.task.dto.TaskCreateRequestDto;
-import de.upteams.tasktracker.task.dto.TaskDto;
-import de.upteams.tasktracker.task.dto.TaskMoveRequestDto;
-import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
+import de.upteams.tasktracker.task.dto.*;
 import de.upteams.tasktracker.task.entity.TaskStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -239,6 +236,52 @@ public interface TaskApi {
             @RequestBody
             @Valid
             TaskMoveRequestDto moveDto,
+
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
+    );
+
+    @Operation(summary = "Move multiple Tasks", description = "Moves the provided tasks to the specified column in bulk")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tasks moved successfully",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = TaskDto.class)))),
+            @ApiResponse(responseCode = "400", description = "Invalid request payload",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = ValidationErrorDto.class)))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @PatchMapping("/bulk/move")
+    List<TaskDto> bulkMove(
+            @RequestBody
+            @Valid
+            TaskBulkMoveRequestDto requestDto,
+
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
+    );
+
+    @Operation(summary = "Update status for multiple Tasks", description = "Assigns the provided status to all tasks in a single request")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tasks updated successfully",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = TaskDto.class)))),
+            @ApiResponse(responseCode = "400", description = "Invalid request payload",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = ValidationErrorDto.class)))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @PatchMapping("/bulk/status")
+    List<TaskDto> bulkUpdateStatus(
+            @RequestBody
+            @Valid
+            TaskBulkStatusUpdateRequestDto requestDto,
 
             @AuthenticationPrincipal
             @Parameter(hidden = true)
