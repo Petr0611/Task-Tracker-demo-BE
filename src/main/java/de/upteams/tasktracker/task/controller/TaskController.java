@@ -75,4 +75,14 @@ public class TaskController implements TaskApi {
     public TaskDto move(String id, @Valid TaskMoveRequestDto moveDto, AuthUserDetails principal) {
         return service.moveTask(id, moveDto, principal.user());
     }
+
+    @Override
+    public List<TaskDto> bulkMove(@Valid TaskBulkMoveRequestDto requestDto, AuthUserDetails principal) {
+        return service.bulkMoveTasks(requestDto, principal.user());
+    }
+
+    @Override
+    public List<TaskDto> bulkUpdateStatus(@Valid TaskBulkStatusUpdateRequestDto requestDto, AuthUserDetails principal) {
+        return service.bulkUpdateStatus(requestDto, principal.user());
+    }
 }
