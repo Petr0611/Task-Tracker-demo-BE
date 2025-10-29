@@ -140,9 +140,18 @@ public interface TaskColumnApi {
             AuthUserDetails principal
     );
 
-    @Operation(summary = "Delete column", description = "Deletes column with all associated tasks")
+    @Operation(
+            summary = "Delete column",
+            description = "Deletes a column with all associated tasks. Only project owners can remove columns"
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Column deleted"),
+            @ApiResponse(responseCode = "400", description = "Column cannot be deleted",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "403", description = "Only project owners are allowed to delete columns",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class))),
             @ApiResponse(responseCode = "404", description = "Column not found",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponseDto.class)))

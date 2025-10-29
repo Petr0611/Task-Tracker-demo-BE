@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.validator.constraints.Length;
 
 import java.util.LinkedHashSet;
@@ -48,6 +49,10 @@ public class TaskColumn extends BaseEntity {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
+    @Column(name = "base_column", nullable = false)
+    @ColumnDefault("false")
+    private boolean baseColumn;
+
     @OneToMany(mappedBy = "column", cascade = CascadeType.ALL, orphanRemoval = true)
     private final Set<Task> tasks = new LinkedHashSet<>();
 
@@ -64,6 +69,7 @@ public class TaskColumn extends BaseEntity {
                 ", title='" + title + '\'' +
                 ", orderIndex=" + orderIndex +
                 ", projectId=" + getIdForToString(project) +
+                ", baseColumn=" + baseColumn +
                 ", tasksIds=" + getIdsForToString(tasks) +
                 '}';
     }
