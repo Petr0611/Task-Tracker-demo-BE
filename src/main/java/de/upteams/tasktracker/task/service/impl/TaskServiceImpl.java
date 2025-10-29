@@ -3,9 +3,15 @@ package de.upteams.tasktracker.task.service.impl;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
+import de.upteams.tasktracker.files.uploading.FileService;
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.project.service.interfaces.ProjectService;
 import de.upteams.tasktracker.task.constants.TaskValidationConstats;
+import de.upteams.tasktracker.task.dto.TaskCreateRequestDto;
+import de.upteams.tasktracker.task.dto.TaskDto;
+import de.upteams.tasktracker.task.dto.TaskMoveRequestDto;
+import de.upteams.tasktracker.task.dto.TaskUpdateRequestDto;
+import de.upteams.tasktracker.task.entity.Attachment;
 import de.upteams.tasktracker.task.dto.*;
 import de.upteams.tasktracker.task.entity.Task;
 import de.upteams.tasktracker.task.entity.TaskStatus;
@@ -18,6 +24,7 @@ import de.upteams.tasktracker.taskcolumn.entity.TaskColumn;
 import de.upteams.tasktracker.taskcolumn.service.interfaces.TaskColumnService;
 import de.upteams.tasktracker.user.entity.AppUser;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -32,6 +39,8 @@ import java.util.*;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
+
 public class TaskServiceImpl implements TaskService {
 
     private static final String COLUMN_PROJECT_MISMATCH_MESSAGE = "Column does not belong to the specified project";
@@ -43,6 +52,8 @@ public class TaskServiceImpl implements TaskService {
     private final ProjectService projectService;
     private final CollaboratorService collaboratorService;
     private final TaskColumnService columnService;
+    private final TaskRepository taskRepository;
+    private final FileService fileService;
 
     @Override
     @Transactional
@@ -64,6 +75,7 @@ public class TaskServiceImpl implements TaskService {
 
         return mappingService.mapEntityToDto(repository.save(entity));
     }
+
 
     @Override
     public TaskDto getById(final String id, final AppUser requester) {
@@ -200,6 +212,22 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public TaskDto addAttachment(String taskId, Attachment attachment, AppUser requester) {
+        Task task = getOrThrow(taskId);
+        enforceProjectAccess(task.getProject(), requester);
+        if (task.getAttachments() == null) {
+            task.setAttachments(new ArrayList<>());
+        }
+        if (!task.getAttachments().contains(attachment)) {
+            task.getAttachments().add(attachment);
+            attachment.setTask(task);
+        }
+        taskRepository.save(task);
+        log.info("Attachment {} successfully added to task {} by user {}",
+                attachment, taskId, requester.getEmail());
+        return mappingService.mapEntityToDto(task);
+    }
+
     @Transactional
     public List<TaskDto> bulkMoveTasks(TaskBulkMoveRequestDto requestDto, AppUser changer) {
         final List<Task> tasksToMove = resolveTasksInRequestedOrder(requestDto.taskIds());
@@ -251,6 +279,30 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional
+    public void deleteAttachmentFromTask(String taskId, String attachmentId) {
+        UUID taskUuid = UUID.fromString(taskId);
+        UUID attachmentUuid = UUID.fromString(attachmentId);
+
+        Task task = taskRepository
+                .findById(taskUuid)
+                .orElseThrow(() -> new RestApiException(HttpStatus.NOT_FOUND, "Task not found!"));
+
+        Attachment attachment = task.getAttachments()
+                .stream()
+                .filter(a -> a.getId().equals(attachmentUuid))
+                .findFirst()
+                .orElseThrow(() -> new RestApiException(HttpStatus.NOT_FOUND, "Attachment not found!"));
+
+        //remove from cloud
+
+        fileService.deleteFileFromCloud(attachment.getUrl());
+
+        //remove from attachment-list
+        task.getAttachments().remove(attachment);
+        taskRepository.save(task);
+        log.info("Attachment {} removed from task {}", attachmentId, taskId);
+    }
+
     public List<TaskDto> bulkUpdateStatus(TaskBulkStatusUpdateRequestDto requestDto, AppUser changer) {
         final List<Task> tasksToUpdate = resolveTasksInRequestedOrder(requestDto.taskIds());
         if (tasksToUpdate.isEmpty()) {
@@ -437,7 +489,8 @@ public class TaskServiceImpl implements TaskService {
             case "status" -> Sort.by(Sort.Direction.ASC, "status");
             case "duedate", "due_date" -> Sort.by(Sort.Direction.ASC, "dueDate");
             case "orderindex", "order_index" -> Sort.by(Sort.Direction.ASC, "orderIndex");
-            default -> throw new RestApiException(HttpStatus.BAD_REQUEST, TaskValidationConstats.SORT_BY_INVALID_MESSAGE);
+            default ->
+                    throw new RestApiException(HttpStatus.BAD_REQUEST, TaskValidationConstats.SORT_BY_INVALID_MESSAGE);
         };
     }
 

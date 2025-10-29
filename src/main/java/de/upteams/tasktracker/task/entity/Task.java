@@ -68,6 +68,9 @@ public class Task extends BaseEntity {
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex;
 
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Attachment>attachments = new ArrayList<>();
+
     @ManyToMany
     @JoinTable(
             name = "task_user",

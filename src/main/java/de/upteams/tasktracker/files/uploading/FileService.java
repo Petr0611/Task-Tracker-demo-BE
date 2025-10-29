@@ -1,6 +1,9 @@
 package de.upteams.tasktracker.files.uploading;
+
+import de.upteams.tasktracker.user.entity.AppUser;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -54,7 +57,7 @@ public interface FileService {
      * @param contentLength exact size in bytes of the input stream; must be greater than zero
      * @param isPublicRead  if true, assigns PUBLIC_READ ACL; otherwise PRIVATE
      * @return a CompletableFuture that completes with true if the upload succeeded,
-     *         or false if validation fails or an exception occurs
+     * or false if validation fails or an exception occurs
      * @throws IllegalArgumentException if objectKey is null/blank or contentLength is null/≤0
      */
     @Async
@@ -66,7 +69,12 @@ public interface FileService {
             Long contentLength,
             boolean isPublicRead
     );
+
     String uploadAvatar(MultipartFile file, String email);
 
+    String uploadAttachment(MultipartFile file, String taskId, AppUser user);
+
     void deleteUserAvatar(String email);
+
+    void deleteFileFromCloud(String attachmentUrl);
 }

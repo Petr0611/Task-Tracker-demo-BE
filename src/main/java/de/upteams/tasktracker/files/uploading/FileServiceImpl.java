@@ -58,6 +58,7 @@ public class FileServiceImpl implements FileService {
     private final ExecutorService executorService;
     private final UserService userService;
 
+
     /**
      * Asynchronously uploads a file input stream to the configured bucket.
      *
@@ -197,6 +198,47 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
+    public String uploadAttachment(MultipartFile file, String taskId, AppUser user) {
+        try {
+            if (file == null || file.isEmpty()) {
+                throw new RestApiException(HttpStatus.BAD_REQUEST, "File must not be empty");
+            }
+
+            if (taskId == null || taskId.isBlank()) {
+                throw new RestApiException(HttpStatus.BAD_REQUEST, "Task ID must not be blank");
+            }
+
+            //  cloud Key
+            String key = String.format("attachments/%s/%s", taskId, file.getOriginalFilename());
+            InputStream inputStream = file.getInputStream();
+
+            // Upload
+            boolean success = uploadFileAsync(
+                    key,
+                    inputStream,
+                    Map.of(
+                            "uploadedBy", user.getEmail(),
+                            "taskId", taskId
+                    ),
+                    file.getContentType(),
+                    file.getSize(),
+                    true
+            ).join();
+            if (!success) {
+                throw new RestApiException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "File upload failed for key: " + key);
+            }
+            return String.format("%s/%s/%s",
+                    config.getEndpoint(),
+                    config.getBucketName(),
+                    key);
+
+        } catch (IOException e) {
+            throw new RestApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not read file stream");
+        }
+    }
+
+    @Override
     public void deleteUserAvatar(String email) {
         AppUser user = userService.getByEmailOrThrow(email);
         String oldUrl = user.getAvatarUrl();
@@ -219,6 +261,17 @@ public class FileServiceImpl implements FileService {
         userService.saveOrUpdate(user);
     }
 
+    @Override
+    public void deleteFileFromCloud(String url) {
+        try {
+            String key = extractKeyFromUrl(url);
+            deleteFile(key);
+            log.info("Deleting file from Cloud for task {}", key);
+        } catch (Exception e) {
+            log.warn("Failed to delete file from Cloud: {}", url, e);
+        }
+    }
+
     private boolean isExternalAvatar(String avatarUrl) {
         return avatarUrl.startsWith(config.getEndpoint());
     }
@@ -233,6 +286,9 @@ public class FileServiceImpl implements FileService {
 
     private String extractKeyFromUrl(String url) {
         int index = url.indexOf("avatars/");
+        if (index == -1) {
+            index = url.indexOf("attachments/");
+        }
         if (index == -1) {
             throw new RestApiException(HttpStatus.BAD_REQUEST, "Cannot extract key from url: " + url);
         }
