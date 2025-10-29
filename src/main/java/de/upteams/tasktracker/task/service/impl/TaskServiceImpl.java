@@ -76,6 +76,7 @@ public class TaskServiceImpl implements TaskService {
         return mappingService.mapEntityToDto(repository.save(entity));
     }
 
+
     @Override
     public TaskDto getById(final String id, final AppUser requester) {
         final Task task = getOrThrow(id);
@@ -225,6 +226,8 @@ public class TaskServiceImpl implements TaskService {
         log.info("Attachment {} successfully added to task {} by user {}",
                 attachment, taskId, requester.getEmail());
         return mappingService.mapEntityToDto(task);
+    }
+
     @Transactional
     public List<TaskDto> bulkMoveTasks(TaskBulkMoveRequestDto requestDto, AppUser changer) {
         final List<Task> tasksToMove = resolveTasksInRequestedOrder(requestDto.taskIds());
@@ -298,6 +301,8 @@ public class TaskServiceImpl implements TaskService {
         task.getAttachments().remove(attachment);
         taskRepository.save(task);
         log.info("Attachment {} removed from task {}", attachmentId, taskId);
+    }
+
     public List<TaskDto> bulkUpdateStatus(TaskBulkStatusUpdateRequestDto requestDto, AppUser changer) {
         final List<Task> tasksToUpdate = resolveTasksInRequestedOrder(requestDto.taskIds());
         if (tasksToUpdate.isEmpty()) {
@@ -484,7 +489,8 @@ public class TaskServiceImpl implements TaskService {
             case "status" -> Sort.by(Sort.Direction.ASC, "status");
             case "duedate", "due_date" -> Sort.by(Sort.Direction.ASC, "dueDate");
             case "orderindex", "order_index" -> Sort.by(Sort.Direction.ASC, "orderIndex");
-            default -> throw new RestApiException(HttpStatus.BAD_REQUEST, TaskValidationConstats.SORT_BY_INVALID_MESSAGE);
+            default ->
+                    throw new RestApiException(HttpStatus.BAD_REQUEST, TaskValidationConstats.SORT_BY_INVALID_MESSAGE);
         };
     }
 
