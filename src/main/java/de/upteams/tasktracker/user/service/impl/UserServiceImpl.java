@@ -1,14 +1,17 @@
 package de.upteams.tasktracker.user.service.impl;
 
+import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
 import de.upteams.tasktracker.user.dto.UserUpdateDto;
 import de.upteams.tasktracker.user.dto.response.UserResponseDto;
 import de.upteams.tasktracker.user.entity.AppUser;
+import de.upteams.tasktracker.user.entity.Role;
 import de.upteams.tasktracker.user.exception.UserNotFoundException;
 import de.upteams.tasktracker.user.persistence.UserRepository;
 import de.upteams.tasktracker.user.service.UserService;
 import de.upteams.tasktracker.user.util.AppUserMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -77,6 +80,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public AppUser updateUserById(String id, UserUpdateDto dto) {
+        AppUser currentUser = getByEmailOrThrow(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+        );
+        boolean isAdmin = currentUser.getRole() == Role.ROLE_ADMIN;
+        boolean isOwner = currentUser.getId().toString().equals(id);
+        if (!isAdmin && !isOwner) {
+            throw new RestApiException(HttpStatus.FORBIDDEN, "You can only edit your own profile");
+        }
         return updateProfile(id, dto);
     }
 
