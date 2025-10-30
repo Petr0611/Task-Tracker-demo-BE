@@ -9,7 +9,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Value;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -79,6 +81,12 @@ public class TaskDto {
             example = "c7243236-8537-4421-bbe0-2744e37032e3"
     )
     String projectId;
+
+    @Schema(
+            description = "List of attachments linked to this task",
+            accessMode = Schema.AccessMode.READ_ONLY
+    )
+    List<AttachmentDto> attachments = new ArrayList<>();
 
     @Schema(
             description = "List of Users assigned to this Task",
