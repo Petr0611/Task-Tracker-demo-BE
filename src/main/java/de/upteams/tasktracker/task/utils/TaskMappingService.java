@@ -1,11 +1,16 @@
 package de.upteams.tasktracker.task.utils;
 
+import de.upteams.tasktracker.task.dto.AttachmentDto;
 import de.upteams.tasktracker.task.dto.TaskDto;
+import de.upteams.tasktracker.task.entity.Attachment;
 import de.upteams.tasktracker.task.entity.Task;
 import de.upteams.tasktracker.user.util.AppUserMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Interface for Task Mapping Service.
@@ -23,9 +28,25 @@ public interface TaskMappingService {
     @Mapping(target = "columnId", source = "column.id")
     @Mapping(target = "columnTitle", source = "column.title")
     @Mapping(target = "orderIndex", source = "orderIndex")
+    @Mapping(target = "attachments", expression = "java(mapAttachments(entity.getAttachments()))")
     TaskDto mapEntityToDto(Task entity);
 
     // @Mapping(target = "project", ignore = true)
     // @Mapping(target = "executors", ignore = true)
     // Task mapDtoToEntity(TaskDto dto);
+
+    default List<AttachmentDto> mapAttachments(List<Attachment> attachments) {
+        if (attachments == null || attachments.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<AttachmentDto> result = new ArrayList<>(attachments.size());
+        for (Attachment attachment : attachments) {
+            if (attachment == null) {
+                continue;
+            }
+            String id = attachment.getId() != null ? attachment.getId().toString() : null;
+            result.add(new AttachmentDto(id, attachment.getUrl()));
+        }
+        return result;
+    }
 }
