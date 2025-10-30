@@ -146,6 +146,12 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public void delete(final String id, final AppUser changer) {
         final Task existedTask = getOrThrow(id);
+        if (existedTask.getAttachments() != null && !existedTask.getAttachments().isEmpty()) {
+            existedTask.getAttachments().forEach(attachment -> {
+                fileService.deleteFileFromCloud(attachment.getUrl());
+            });
+            existedTask.getAttachments().clear();
+        }
         enforceTaskManagementPermission(existedTask.getProject(), changer);
         final TaskColumn column = existedTask.getColumn();
         repository.delete(existedTask);
