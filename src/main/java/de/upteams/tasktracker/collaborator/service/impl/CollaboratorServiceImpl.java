@@ -8,10 +8,12 @@ import de.upteams.tasktracker.collaborator.exception.CollaboratorNotFoundExcepti
 import de.upteams.tasktracker.collaborator.persistence.CollaboratorRepository;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
 import de.upteams.tasktracker.exception.handling.exceptions.common.OwnerAlreadyExistsException;
+import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.user.entity.AppUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -124,7 +126,7 @@ public class CollaboratorServiceImpl implements CollaboratorService {
                     if (roles.contains(ProjectRoles.MEMBER)) return ProjectRoles.MEMBER;
                     return ProjectRoles.VIEWER;
                 })
-                .orElse(ProjectRoles.VIEWER);
+                .orElseThrow(() -> new RestApiException(HttpStatus.FORBIDDEN, "User is not a member of this project"));
     }
 
     private boolean hasAnyRequiredRole(Collaborator collaborator, Collection<ProjectRoles> requiredRoles) {
