@@ -41,9 +41,11 @@ public class UserControllerImpl implements UserApi {
      * Returns the user by id
      */
     @Override
-    public UserResponseDto getById(String id) {
-        return mapToDto(service.getByIdOrThrow(id));
+    public UserResponseDto getById(String id, Authentication authentication) {
+        AppUser requestedUser = service.getByIdOrThrow(id);
+        return mapToDto(requestedUser);
     }
+
 
     /**
      * Updates profile of the current authenticated user
@@ -70,6 +72,7 @@ public class UserControllerImpl implements UserApi {
      */
     private UserResponseDto mapToDto(AppUser user) {
         return new UserResponseDto(
+                user.getId().toString(),
                 user.getEmail(),
                 user.getRole().name(),
                 user.getConfirmationStatus(),
