@@ -79,6 +79,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(OwnerAlreadyExistsException.class)
     public ResponseEntity<ErrorResponseDto> handleOwnerAlreadyExists(
             OwnerAlreadyExistsException exception,
             HttpServletRequest request
