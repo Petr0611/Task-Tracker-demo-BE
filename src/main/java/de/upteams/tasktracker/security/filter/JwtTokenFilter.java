@@ -70,8 +70,12 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         Cookie cookie = WebUtils.getCookie(request, ACCESS_TOKEN_COOKIE);
         if (cookie != null) {
             return cookie.getValue();
-        } else {
-            return null;
         }
+        String bearer = request.getHeader("Authorization");
+        if (StringUtils.isNotBlank(bearer) && bearer.startsWith("Bearer ")) {
+            return bearer.substring(7);
+        }
+        return null;
     }
 }
+

@@ -58,34 +58,29 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     @Override
     public ProjectResponseDto save(ProjectCreateDto newProjectDto, AppUser projectOwner) {
-        // Создаём сущность Project из DTO
+
         Project project = mappingService.mapDtoToEntity(newProjectDto);
         project.setOwner(projectOwner);
-
-        // Сохраняем проект в репозитории
+        project.setOwnerAssigned(true); // сразу проставляем
         Project savedProject = repository.save(project);
 
-        // Добавляем владельца как коллаборатора с ролью OWNER
         collaboratorService.addCollaborator(
                 projectOwner,
                 savedProject,
                 Set.of(ProjectRoles.OWNER)
         );
 
-        // Получаем DTO с уже замаппленными полями (id, title, description, owner, members)
         ProjectResponseDto baseDto = mappingService.mapEntityToDto(savedProject);
-
-        // Формируем DTO с корректными приглашениями
-        List<ProjectInvitationDto> invitationDtos = project.getInvitations().stream()
+        List<ProjectInvitationDto> invitationDtos = savedProject.getInvitations().stream()
                 .map(inv -> new ProjectInvitationDto(
                         inv.getEmail(),
                         inv.getRole(),
-                        inv.getStatus() == InvitationStatus.USED ? CollaboratorStatus.ACTIVE : CollaboratorStatus.PENDING                         // role
+                        inv.getStatus() == InvitationStatus.USED
+                                ? CollaboratorStatus.ACTIVE
+                                : CollaboratorStatus.PENDING
                 ))
                 .toList();
 
-
-        // Возвращаем финальный ProjectResponseDto
         return new ProjectResponseDto(
                 baseDto.id(),
                 baseDto.title(),
