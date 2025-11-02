@@ -31,7 +31,7 @@ public interface UserApi extends UserApiSwaggerDoc {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    UserResponseDto getById(@PathVariable String id);
+    UserResponseDto getById(@PathVariable String id, Authentication authentication);
 
     /**
      * Обновляет профиль текущего пользователя

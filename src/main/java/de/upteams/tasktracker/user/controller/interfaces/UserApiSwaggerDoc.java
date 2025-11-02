@@ -118,7 +118,7 @@ public interface UserApiSwaggerDoc {
                     required = true,
                     example = "c3a39ef0-12a9-4a02-8235-947e6cf25b17"
             )
-            String id);
+            String id, Authentication authentication);
 
     @Operation(
             summary = "Update current user profile",
