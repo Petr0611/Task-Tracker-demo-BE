@@ -65,8 +65,8 @@ public class ProjectController implements ProjectApi {
     }
 
     @Override
-    public ProjectResponseDto update(String id, ProjectUpdateDto updateDto) {
-        return service.updateProject(id, updateDto);
+    public ProjectResponseDto update(String id, ProjectUpdateDto updateDto, AuthUserDetails principal) {
+        return service.updateProject(id, updateDto, principal);
     }
 
     @Override
