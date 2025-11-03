@@ -61,7 +61,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project project = mappingService.mapDtoToEntity(newProjectDto);
         project.setOwner(projectOwner);
-        project.setOwnerAssigned(true); // сразу проставляем
+        project.setOwnerAssigned(true);
         Project savedProject = repository.save(project);
 
         collaboratorService.addCollaborator(
