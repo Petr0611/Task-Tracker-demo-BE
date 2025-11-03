@@ -79,20 +79,21 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(OwnerAlreadyExistsException.class)
     public ResponseEntity<ErrorResponseDto> handleOwnerAlreadyExists(
             OwnerAlreadyExistsException exception,
             HttpServletRequest request
     ) {
         ErrorResponseDto errorResponse = new ErrorResponseDto(
                 LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
                 exception.getMessage(),
                 List.of(),
                 request.getRequestURI()
         );
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(HttpStatus.CONFLICT)
                 .body(errorResponse);
     }
 
