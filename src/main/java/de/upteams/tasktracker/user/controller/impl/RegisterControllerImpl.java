@@ -6,6 +6,7 @@ import de.upteams.tasktracker.user.dto.request.UserCreateDto;
 import de.upteams.tasktracker.user.dto.response.UserCreateResponseDto;
 import de.upteams.tasktracker.user.dto.response.UserResponseDto;
 import de.upteams.tasktracker.user.service.impl.UserRegisterService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,7 +19,7 @@ public class RegisterControllerImpl implements RegisterControllerApi {
     private final UserRegisterService service;
 
     @Override
-    public UserCreateResponseDto register(UserCreateDto registerUser) {
+    public UserCreateResponseDto register(@Valid UserCreateDto registerUser) {
         return service.register(registerUser);
     }
 
