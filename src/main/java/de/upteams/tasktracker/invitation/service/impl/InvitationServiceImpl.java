@@ -145,6 +145,14 @@ public class InvitationServiceImpl implements InvitationService {
     }
 
     private Invitation createInvitation(Project project, String email, ProjectRoles role, Instant expiresAt) {
+        if (role == ProjectRoles.OWNER) {
+            boolean hasOwner = project.getProjectTeam().stream()
+                    .anyMatch(collaborator -> collaborator.getProjectRolesSet().contains(ProjectRoles.OWNER));
+
+            if (hasOwner) {
+                throw new OwnerAlreadyExistsException();
+            }
+        }
         Invitation invitation = new Invitation();
         invitation.setProject(project);
         invitation.setEmail(email);
