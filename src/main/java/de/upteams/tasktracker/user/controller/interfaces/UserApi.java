@@ -1,11 +1,14 @@
 package de.upteams.tasktracker.user.controller.interfaces;
 
 import de.upteams.tasktracker.user.dto.UserUpdateDto;
+import de.upteams.tasktracker.user.dto.request.ChangePasswordRequestDTO;
 import de.upteams.tasktracker.user.dto.response.UserResponseDto;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 /**
@@ -14,6 +17,19 @@ import java.util.List;
  */
 @RequestMapping("/api/v1/users")
 public interface UserApi extends UserApiSwaggerDoc {
+    /**
+     * Смена пароля пользователем
+     */
+    @PutMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
+    ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequestDTO request, Authentication authentication);
+
+    @PutMapping("/{id}/change-password")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> changePasswordByAdmin(
+            @PathVariable String id,
+            @RequestBody ChangePasswordRequestDTO request,
+            Authentication authentication);
 
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")

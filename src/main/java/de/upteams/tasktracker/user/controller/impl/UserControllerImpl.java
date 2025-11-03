@@ -2,10 +2,12 @@ package de.upteams.tasktracker.user.controller.impl;
 
 import de.upteams.tasktracker.user.controller.interfaces.UserApi;
 import de.upteams.tasktracker.user.dto.UserUpdateDto;
+import de.upteams.tasktracker.user.dto.request.ChangePasswordRequestDTO;
 import de.upteams.tasktracker.user.dto.response.UserResponseDto;
 import de.upteams.tasktracker.user.entity.AppUser;
 import de.upteams.tasktracker.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +24,16 @@ import java.util.List;
 public class UserControllerImpl implements UserApi {
 
     private final UserService service;
+
+    @Override
+    public ResponseEntity<String> changePassword(ChangePasswordRequestDTO request, Authentication authentication) {
+        return service.changePassword(request,authentication);
+    }
+
+    @Override
+    public ResponseEntity<String> changePasswordByAdmin(String id, ChangePasswordRequestDTO request, Authentication authentication) {
+        return service.changePasswordByAdmin(id, request, authentication);
+    }
 
     @Override
     public List<UserResponseDto> getAll() {

@@ -2,6 +2,7 @@ package de.upteams.tasktracker.user.service.impl;
 
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
 import de.upteams.tasktracker.user.dto.UserUpdateDto;
+import de.upteams.tasktracker.user.dto.request.ChangePasswordRequestDTO;
 import de.upteams.tasktracker.user.dto.response.UserResponseDto;
 import de.upteams.tasktracker.user.entity.AppUser;
 import de.upteams.tasktracker.user.entity.Role;
@@ -12,9 +13,11 @@ import de.upteams.tasktracker.user.util.AppUserMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,6 +33,38 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository repository;
     private final AppUserMapper mappingService;
+    private final PasswordEncoder passwordEncoder;
+
+
+    @Override
+    public ResponseEntity<String> changePasswordByAdmin(String id, ChangePasswordRequestDTO request, Authentication authentication) {
+        AppUser currentUser = repository.findByEmailIgnoreCase(authentication.getName())
+                .orElseThrow(() -> new RestApiException(HttpStatus.NOT_FOUND, "User not found"));
+        if (!currentUser.getRole().equals(Role.ROLE_ADMIN)) {
+            throw new RestApiException(HttpStatus.FORBIDDEN, "Only admins can change other users' passwords");
+        }
+        AppUser targetUser = repository.findById(UUID.fromString(id))
+                .orElseThrow(() -> new RestApiException(HttpStatus.NOT_FOUND, "User not found"));
+        if (currentUser.getId().equals(targetUser.getId())) {
+            throw new RestApiException(HttpStatus.BAD_REQUEST, "Use normal change password endpoint for your own password");
+        }
+        targetUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        repository.save(targetUser);
+        return ResponseEntity.ok("Password changed successfully");
+    }
+
+    @Override
+    public ResponseEntity<String> changePassword(ChangePasswordRequestDTO request, Authentication authentication) {
+        AppUser currentUser = repository.findByEmailIgnoreCase(authentication.getName())
+                .orElseThrow(() -> new RestApiException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), currentUser.getPassword())) {
+            throw new RestApiException(HttpStatus.BAD_REQUEST, "Old password is incorrect");
+        }
+        currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        repository.save(currentUser);
+        return ResponseEntity.ok("Password changed successfully");
+    }
 
     @Override
     public AppUser saveOrUpdate(final AppUser user) {
