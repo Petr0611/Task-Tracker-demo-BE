@@ -3,6 +3,7 @@ package de.upteams.tasktracker.invitation.service.impl;
 import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
+import de.upteams.tasktracker.exception.handling.exceptions.common.OwnerAlreadyExistsException;
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
 import de.upteams.tasktracker.invitation.entity.Invitation;
 import de.upteams.tasktracker.invitation.entity.InvitationStatus;
@@ -144,6 +145,14 @@ public class InvitationServiceImpl implements InvitationService {
     }
 
     private Invitation createInvitation(Project project, String email, ProjectRoles role, Instant expiresAt) {
+        if (role == ProjectRoles.OWNER) {
+            boolean hasOwner = project.getProjectTeam().stream()
+                    .anyMatch(collaborator -> collaborator.getProjectRolesSet().contains(ProjectRoles.OWNER));
+
+            if (hasOwner) {
+                throw new OwnerAlreadyExistsException();
+            }
+        }
         Invitation invitation = new Invitation();
         invitation.setProject(project);
         invitation.setEmail(email);
@@ -155,6 +164,14 @@ public class InvitationServiceImpl implements InvitationService {
     }
 
     private Collaborator activateCollaborator(AppUser user, Invitation invitation) {
+        if (invitation.getRole() == ProjectRoles.OWNER) {
+            boolean hasOwner = invitation.getProject().getProjectTeam().stream()
+                    .anyMatch(collab -> collab.getProjectRolesSet().contains(ProjectRoles.OWNER));
+
+            if (hasOwner) {
+                throw new OwnerAlreadyExistsException();
+            }
+        }
         Collaborator collaborator = collaboratorService.activateCollaborator(
                 user,
                 invitation.getProject(),
