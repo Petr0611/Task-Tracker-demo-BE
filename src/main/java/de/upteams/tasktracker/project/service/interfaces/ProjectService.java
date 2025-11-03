@@ -27,6 +27,8 @@ public interface ProjectService {
 
     List<ProjectResponseDto> findAllByOwner(AppUser owner);
 
+    List<ProjectResponseDto> findAllVisibleForUser(AppUser user);
+
     void delete(String id);
 
     ProjectResponseDto updateProject(String id, ProjectUpdateDto updateDto);

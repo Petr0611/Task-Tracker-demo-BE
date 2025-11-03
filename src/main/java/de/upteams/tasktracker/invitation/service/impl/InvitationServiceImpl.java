@@ -21,10 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -155,17 +152,23 @@ public class InvitationServiceImpl implements InvitationService {
     }
 
     private Collaborator activateCollaborator(AppUser user, Invitation invitation) {
+        Set<ProjectRoles> roles = EnumSet.of(invitation.getRole());
+
         Collaborator collaborator = collaboratorService.activateCollaborator(
                 user,
                 invitation.getProject(),
-                EnumSet.of(invitation.getRole())
+                roles
         );
 
         invitation.setStatus(InvitationStatus.USED);
         invitationRepository.save(invitation);
+
         log.info("Invitation {} consumed for project {}", invitation.getId(), invitation.getProject().getId());
+        log.info("Saving collaborator: user={}, project={}, roles={}", user.getEmail(), invitation.getProject().getId(), roles);
+
         return collaborator;
     }
+
 
     private String normalizeEmail(String email) {
         return email.toLowerCase(Locale.ROOT).trim();

@@ -17,6 +17,7 @@ import de.upteams.tasktracker.project.dto.request.ProjectCollaboratorAddRequestD
 import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
 import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
+import de.upteams.tasktracker.project.dto.response.MemberDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.project.exception.ProjectNotFoundException;
@@ -119,27 +120,28 @@ public class ProjectServiceImpl implements ProjectService {
         return repository.findAllByOwner(owner)
                 .stream()
                 .map(project -> {
-                    // Маппим проект в DTO через MapStruct
+                    // Основной DTO через MapStruct
                     ProjectResponseDto dto = mappingService.mapEntityToDto(project);
 
-                    // Берём все приглашения проекта и маппим их в DTO
-                    List<ProjectInvitationDto> invitationDtos = mappingService
-                            .mapInvitationsToDto(project.getInvitations());
+                    // Теперь поле members уже корректно маппится через mapCollaboratorsToMembers
+                    // Нам не нужно вручную создавать MemberDto
 
-                    // Создаём новый DTO с подставленными приглашениями
-                    return new ProjectResponseDto(
-                            dto.id(),
-                            dto.title(),
-                            dto.description(),
-                            dto.owner(),
-                            dto.ownerAssigned(),
-                            dto.members(),
-                            invitationDtos
-                    );
+                    // invitations тоже маппятся через mapInvitationsToDto в ProjectMapper
+                    return dto;
                 })
                 .toList();
     }
 
+
+    @Override
+    public List<ProjectResponseDto> findAllVisibleForUser(AppUser user) {
+        // Получаем все проекты, где пользователь владелец, коллаборатор или есть активное приглашение
+        List<Project> projects = repository.findAllVisibleForUser(user);
+
+        return projects.stream()
+                .map(mappingService::mapEntityToDto) // используем MapStruct для маппинга
+                .toList();
+    }
 
 
 

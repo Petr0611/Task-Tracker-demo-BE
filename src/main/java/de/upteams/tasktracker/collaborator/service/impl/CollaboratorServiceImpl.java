@@ -87,7 +87,10 @@ public class CollaboratorServiceImpl implements CollaboratorService {
         collaborator.getProjectRolesSet().addAll(roles);
         collaborator.setStatus(CollaboratorStatus.ACTIVE);
 
+        log.info("Before save: collaborator={}, roles={}", collaborator.getAppUser().getEmail(), collaborator.getProjectRolesSet());
         Collaborator savedCollaborator = collaboratorRepository.save(collaborator);
+        log.info("After save: collaboratorId={}, roles={}", savedCollaborator.getId(), savedCollaborator.getProjectRolesSet());
+
         project.getProjectTeam().add(savedCollaborator);
         return savedCollaborator;
     }
@@ -139,8 +142,9 @@ public class CollaboratorServiceImpl implements CollaboratorService {
         Collaborator collaborator = new Collaborator();
         collaborator.setAppUser(user);
         collaborator.setProject(project);
-        collaborator.getProjectRolesSet().addAll(roles);
+        collaborator.setProjectRolesSet(new HashSet<>(roles));
         return collaborator;
     }
+
 
 }

@@ -18,8 +18,24 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     List<Project> findAllByOwner(AppUser owner);
 
     @Query("SELECT DISTINCT p FROM Project p " +
-            "LEFT JOIN FETCH p.projectTeam t " +
-            "WHERE p.owner.id = :ownerId")
+           "LEFT JOIN FETCH p.projectTeam t " +
+           "WHERE p.owner.id = :ownerId")
     List<Project> findAllByOwnerWithTeam(@Param("ownerId") UUID ownerId);
+
+
+    @Query("""
+SELECT DISTINCT p
+FROM Project p
+LEFT JOIN FETCH p.projectTeam t
+LEFT JOIN FETCH t.appUser
+LEFT JOIN FETCH t.projectRolesSet
+LEFT JOIN FETCH p.invitations i
+WHERE p.owner = :user
+   OR t.appUser = :user
+   OR (LOWER(i.email) = LOWER(:#{#user.email}) AND i.status = 'USED')
+""")
+    List<Project> findAllVisibleForUser(@Param("user") AppUser user);
+
+
 
 }
