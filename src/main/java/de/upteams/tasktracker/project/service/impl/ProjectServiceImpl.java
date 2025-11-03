@@ -17,17 +17,20 @@ import de.upteams.tasktracker.project.dto.request.ProjectCollaboratorAddRequestD
 import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
 import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
-import de.upteams.tasktracker.project.dto.response.MemberDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.project.exception.ProjectNotFoundException;
 import de.upteams.tasktracker.project.persistence.ProjectRepository;
 import de.upteams.tasktracker.project.service.interfaces.ProjectService;
 import de.upteams.tasktracker.project.utils.ProjectMapper;
+import de.upteams.tasktracker.security.permissions.ProjectPermissionEvaluator;
+import de.upteams.tasktracker.security.service.AuthUserDetails;
 import de.upteams.tasktracker.user.entity.AppUser;
 import de.upteams.tasktracker.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +53,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final InvitationService invitationService;
     private final UserService userService;
     private final InvitationRepository invitationRepository;
+    private final ProjectPermissionEvaluator permissionEvaluator;
 
     @Transactional
     @Override
@@ -76,7 +80,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .map(inv -> new ProjectInvitationDto(
                         inv.getEmail(),
                         inv.getRole(),
-                        inv.getStatus()  == InvitationStatus.USED ? CollaboratorStatus.ACTIVE : CollaboratorStatus.PENDING                         // role
+                        inv.getStatus() == InvitationStatus.USED ? CollaboratorStatus.ACTIVE : CollaboratorStatus.PENDING                         // role
                 ))
                 .toList();
 
@@ -120,31 +124,26 @@ public class ProjectServiceImpl implements ProjectService {
         return repository.findAllByOwner(owner)
                 .stream()
                 .map(project -> {
-                    // Основной DTO через MapStruct
+                    // Маппим проект в DTO через MapStruct
                     ProjectResponseDto dto = mappingService.mapEntityToDto(project);
 
-                    // Теперь поле members уже корректно маппится через mapCollaboratorsToMembers
-                    // Нам не нужно вручную создавать MemberDto
+                    // Берём все приглашения проекта и маппим их в DTO
+                    List<ProjectInvitationDto> invitationDtos = mappingService
+                            .mapInvitationsToDto(project.getInvitations());
 
-                    // invitations тоже маппятся через mapInvitationsToDto в ProjectMapper
-                    return dto;
+                    // Создаём новый DTO с подставленными приглашениями
+                    return new ProjectResponseDto(
+                            dto.id(),
+                            dto.title(),
+                            dto.description(),
+                            dto.owner(),
+                            dto.ownerAssigned(),
+                            dto.members(),
+                            invitationDtos
+                    );
                 })
                 .toList();
     }
-
-
-    @Override
-    public List<ProjectResponseDto> findAllVisibleForUser(AppUser user) {
-        // Получаем все проекты, где пользователь владелец, коллаборатор или есть активное приглашение
-        List<Project> projects = repository.findAllVisibleForUser(user);
-
-        return projects.stream()
-                .map(mappingService::mapEntityToDto) // используем MapStruct для маппинга
-                .toList();
-    }
-
-
-
 
 
     @Override
@@ -153,8 +152,16 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectResponseDto updateProject(String id, ProjectUpdateDto updateDTO) {
+    public ProjectResponseDto updateProject(String id, ProjectUpdateDto updateDTO, AuthUserDetails principal) {
         Project project = getOrTrow(id);
+
+        if (!permissionEvaluator.hasAnyRole(
+                id,
+                SecurityContextHolder.getContext().getAuthentication(),
+                List.of(ProjectRoles.OWNER, ProjectRoles.ADMIN))
+        ) {
+            throw new AccessDeniedException("You do not have permission to update this project");
+        }
 
         if (updateDTO.title() != null && !updateDTO.title().isBlank()) {
             project.setTitle(updateDTO.title());
@@ -165,7 +172,16 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         Project updatedProject = repository.save(project);
-        return mappingService.mapEntityToDto(updatedProject);
+        ProjectResponseDto dto = mappingService.mapEntityToDto(updatedProject);
+        return new ProjectResponseDto(
+                dto.id(),
+                dto.title(),
+                dto.description(),
+                dto.owner(),
+                true,
+                dto.members(),
+                dto.invitations()
+        );
     }
 
     @Override

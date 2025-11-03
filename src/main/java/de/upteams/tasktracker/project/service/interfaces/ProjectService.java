@@ -8,6 +8,7 @@ import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.entity.Project;
+import de.upteams.tasktracker.security.service.AuthUserDetails;
 import de.upteams.tasktracker.user.entity.AppUser;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public interface ProjectService {
 
     void delete(String id);
 
-    ProjectResponseDto updateProject(String id, ProjectUpdateDto updateDto);
+    ProjectResponseDto updateProject(String id, ProjectUpdateDto updateDto, AuthUserDetails principal);
 
     void addUserToProject(String projectId, ProjectCollaboratorAddRequestDto requestDto, AppUser initiator);
 

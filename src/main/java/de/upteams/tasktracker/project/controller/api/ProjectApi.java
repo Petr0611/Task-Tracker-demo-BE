@@ -156,10 +156,13 @@ public interface ProjectApi {
                             schema = @Schema(implementation = ErrorResponseDto.class))),
             @ApiResponse(responseCode = "400", description = "Invalid payload",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ValidationErrorDto.class))))
+                            array = @ArraySchema(schema = @Schema(implementation = ValidationErrorDto.class)))),
+            @ApiResponse(responseCode = "403", description = "Forbidden — user does not have rights to update this project",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @PutMapping("/{id}")
-    @PreAuthorize("@permissionEvaluator.hasAnyRole(#id, authentication, T(java.util.List).of(T(de.upteams.tasktracker.collaborator.entity.ProjectRoles).OWNER, T(de.upteams.tasktracker.collaborator.entity.ProjectRoles).ADMIN))")
+    @PreAuthorize("isAuthenticated()")
     ProjectResponseDto update(
             @PathVariable
             @Parameter(required = true, description = "Project ID to update")
@@ -168,10 +171,14 @@ public interface ProjectApi {
             @RequestBody
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
-                    description = "Updated Project fields"
+                    description = "Updated Project fields (title and/or description)"
             )
             @Valid
-            ProjectUpdateDto updateDto
+            ProjectUpdateDto updateDto,
+
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
     );
 
     @Operation(summary = "Add collaborator to project", description = "Assign a user to the project team with specified roles")

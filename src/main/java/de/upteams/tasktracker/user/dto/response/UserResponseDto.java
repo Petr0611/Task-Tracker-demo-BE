@@ -9,6 +9,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "User data returned by the API")
 public record UserResponseDto(
         @Schema(
+                description = "User's ID",
+                example     = "e02414e8-f4f7-4b4c-9045-f295cbe3f28a"
+        )
+        String id,
+        @Schema(
                 description = "User's email address",
                 example     = "homer@simpsons.com"
         )
