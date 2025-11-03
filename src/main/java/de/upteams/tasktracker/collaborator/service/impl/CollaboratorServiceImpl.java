@@ -57,6 +57,7 @@ public class CollaboratorServiceImpl implements CollaboratorService {
 
     @Override
     public Collaborator addCollaborator(AppUser user, Project project, Set<ProjectRoles> roles) {
+        project.setOwnerAssigned(true);
         if (roles.contains(ProjectRoles.OWNER)) {
             boolean hasOwner = collaboratorRepository.existsByProjectAndRole(project, ProjectRoles.OWNER);
             if (hasOwner) {

@@ -1,9 +1,12 @@
 package de.upteams.tasktracker.security.service;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +19,7 @@ import java.util.function.Function;
 /**
  * Service for generation, validation and parsing of JWT tokens.
  */
+@Slf4j
 @Service
 public class JwtTokenService {
 
@@ -70,8 +74,10 @@ public class JwtTokenService {
     public String generateAccessToken(String userEmail) {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(accessTokenLiveInMinutes * 60L);
+
         return Jwts.builder()
                 .subject(userEmail)
+                .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
                 .signWith(accessTokenKey, Jwts.SIG.HS256)
                 .compact();
@@ -97,7 +103,11 @@ public class JwtTokenService {
         try {
             parseClaims(token, selectKey(tokenType));
             return true;
-        } catch (Exception e) {
+        } catch (ExpiredJwtException ex) {
+            log.warn("Token expired: {}", ex.getMessage());
+            return false;
+        } catch (JwtException | IllegalArgumentException ex) {
+            log.error("Invalid token: {}", ex.getMessage());
             return false;
         }
     }

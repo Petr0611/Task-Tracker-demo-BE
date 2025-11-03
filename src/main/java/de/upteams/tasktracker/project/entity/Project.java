@@ -62,15 +62,17 @@ public class Project extends BaseEntity {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private final Set<Task> tasks = new HashSet<>();
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<Invitation> invitations = new HashSet<>();
+
+    @Column(name = "owner_assigned", nullable = false)
+    private boolean ownerAssigned = false;
+
     public Project(String title, String description, AppUser owner) {
         this.title = title;
         this.description = description;
         this.owner = owner;
     }
-
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<Invitation> invitations = new HashSet<>();
-
 
     @Override
     public String toString() {
