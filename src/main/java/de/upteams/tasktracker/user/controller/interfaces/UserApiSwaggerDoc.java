@@ -2,6 +2,7 @@ package de.upteams.tasktracker.user.controller.interfaces;
 
 import de.upteams.tasktracker.exception.handling.response.ErrorResponseDto;
 import de.upteams.tasktracker.user.dto.UserUpdateDto;
+import de.upteams.tasktracker.user.dto.request.ChangePasswordRequestDTO;
 import de.upteams.tasktracker.user.dto.response.UserResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
 import java.util.List;
@@ -206,4 +208,96 @@ public interface UserApiSwaggerDoc {
             String id,
             UserUpdateDto dto
     );
+
+    @Operation(
+            summary = "Change password of current user",
+            description = "Allows an authenticated user to change their password by providing the current and new password."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Password changed successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "message": "Password changed successfully"
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Old password is incorrect or validation failed",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized – user not authenticated"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            )
+    })
+    ResponseEntity<String> changePassword(
+            @Parameter(
+                    description = "Object containing the old and new password of the user",
+                    required = true
+            )
+            ChangePasswordRequestDTO request,
+            Authentication authentication);
+
+    @Operation(
+            summary = "Change password of any user (admin only)",
+            description = "Allows an admin to change the password of any user by specifying their ID and the new password."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Password changed successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "message": "Password changed successfully for user ID c3a39ef0-12a9-4a02-8235-947e6cf25b17"
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Validation failed for new password",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Access denied – only admins can perform this action",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+            )
+    })
+    ResponseEntity<String> changePasswordByAdmin(
+            @Parameter(
+                    description = "ID of the user whose password should be changed",
+                    required = true,
+                    example = "c3a39ef0-12a9-4a02-8235-947e6cf25b17"
+            )
+            String userId,
+            @Parameter(
+                    description = "Object containing the new password for the user",
+                    required = true
+            )
+            ChangePasswordRequestDTO request,
+            Authentication authentication);
 }

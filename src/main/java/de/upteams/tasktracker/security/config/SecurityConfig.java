@@ -99,6 +99,7 @@ public class SecurityConfig {
                         // reset пароля
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password-request").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password").permitAll()
+                        .requestMatchers("/users/change-password").authenticated()
 
                         .requestMatchers(HttpMethod.POST, "/api/v1/projects/*/invitations").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/invitations/accept").permitAll()
