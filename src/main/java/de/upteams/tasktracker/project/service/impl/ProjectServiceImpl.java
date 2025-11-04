@@ -2,9 +2,11 @@ package de.upteams.tasktracker.project.service.impl;
 
 import de.upteams.tasktracker.collaborator.dto.UpdateCollaboratorRolesDto;
 import de.upteams.tasktracker.collaborator.entity.Collaborator;
+import de.upteams.tasktracker.collaborator.entity.CollaboratorStatus;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
+import de.upteams.tasktracker.invitation.dto.ProjectInvitationDto;
 import de.upteams.tasktracker.invitation.dto.ProjectInvitationResponseDto;
 import de.upteams.tasktracker.invitation.entity.InvitationStatus;
 import de.upteams.tasktracker.invitation.service.interfaces.InvitationService;
@@ -46,8 +48,15 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     @Override
     public ProjectResponseDto save(ProjectCreateDto newProjectDto, AppUser projectOwner) {
+<<<<<<< HEAD
         Project project = mappingService.mapDtoToEntity(newProjectDto);
         project.setOwner(projectOwner);
+=======
+
+        Project project = mappingService.mapDtoToEntity(newProjectDto);
+        project.setOwner(projectOwner);
+        project.setOwnerAssigned(true);
+>>>>>>> origin
         Project savedProject = repository.save(project);
 
         collaboratorService.addCollaborator(
@@ -56,7 +65,30 @@ public class ProjectServiceImpl implements ProjectService {
                 Set.of(ProjectRoles.OWNER)
         );
 
+<<<<<<< HEAD
         return mappingService.mapEntityToDto(savedProject);
+=======
+        ProjectResponseDto baseDto = mappingService.mapEntityToDto(savedProject);
+        List<ProjectInvitationDto> invitationDtos = savedProject.getInvitations().stream()
+                .map(inv -> new ProjectInvitationDto(
+                        inv.getEmail(),
+                        inv.getRole(),
+                        inv.getStatus() == InvitationStatus.USED
+                                ? CollaboratorStatus.ACTIVE
+                                : CollaboratorStatus.PENDING
+                ))
+                .toList();
+
+        return new ProjectResponseDto(
+                baseDto.id(),
+                baseDto.title(),
+                baseDto.description(),
+                baseDto.owner(),
+                true,
+                baseDto.members(),
+                invitationDtos
+        );
+>>>>>>> origin
     }
 
     @Override
