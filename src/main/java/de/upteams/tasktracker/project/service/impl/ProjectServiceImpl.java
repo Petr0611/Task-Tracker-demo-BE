@@ -1,22 +1,17 @@
 package de.upteams.tasktracker.project.service.impl;
 
-import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.collaborator.dto.UpdateCollaboratorRolesDto;
-import de.upteams.tasktracker.collaborator.entity.CollaboratorStatus;
+import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
-import de.upteams.tasktracker.invitation.dto.InvitationAcceptResponseDto;
-import de.upteams.tasktracker.invitation.dto.ProjectInvitationDto;
 import de.upteams.tasktracker.invitation.dto.ProjectInvitationResponseDto;
-import de.upteams.tasktracker.invitation.entity.Invitation;
 import de.upteams.tasktracker.invitation.entity.InvitationStatus;
-import de.upteams.tasktracker.invitation.persistence.InvitationRepository;
 import de.upteams.tasktracker.invitation.service.interfaces.InvitationService;
-import de.upteams.tasktracker.project.dto.request.ProjectCollaboratorAddRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
-import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
+import de.upteams.tasktracker.project.dto.request.ProjectCollaboratorAddRequestDto;
+import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.project.exception.ProjectNotFoundException;
@@ -34,15 +29,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Service for various operations with Projects
- */
 @Service
 @RequiredArgsConstructor
 public class ProjectServiceImpl implements ProjectService {
@@ -52,51 +41,23 @@ public class ProjectServiceImpl implements ProjectService {
     private final CollaboratorService collaboratorService;
     private final InvitationService invitationService;
     private final UserService userService;
-    private final InvitationRepository invitationRepository;
     private final ProjectPermissionEvaluator permissionEvaluator;
 
     @Transactional
     @Override
     public ProjectResponseDto save(ProjectCreateDto newProjectDto, AppUser projectOwner) {
-        // Создаём сущность Project из DTO
         Project project = mappingService.mapDtoToEntity(newProjectDto);
         project.setOwner(projectOwner);
-
-        // Сохраняем проект в репозитории
         Project savedProject = repository.save(project);
 
-        // Добавляем владельца как коллаборатора с ролью OWNER
         collaboratorService.addCollaborator(
                 projectOwner,
                 savedProject,
                 Set.of(ProjectRoles.OWNER)
         );
 
-        // Получаем DTO с уже замаппленными полями (id, title, description, owner, members)
-        ProjectResponseDto baseDto = mappingService.mapEntityToDto(savedProject);
-
-        // Формируем DTO с корректными приглашениями
-        List<ProjectInvitationDto> invitationDtos = project.getInvitations().stream()
-                .map(inv -> new ProjectInvitationDto(
-                        inv.getEmail(),
-                        inv.getRole(),
-                        inv.getStatus() == InvitationStatus.USED ? CollaboratorStatus.ACTIVE : CollaboratorStatus.PENDING                         // role
-                ))
-                .toList();
-
-
-        // Возвращаем финальный ProjectResponseDto
-        return new ProjectResponseDto(
-                baseDto.id(),
-                baseDto.title(),
-                baseDto.description(),
-                baseDto.owner(),
-                true,
-                baseDto.members(),
-                invitationDtos
-        );
+        return mappingService.mapEntityToDto(savedProject);
     }
-
 
     @Override
     public ProjectResponseDto getById(String id) {
@@ -105,15 +66,13 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Project getOrTrow(String id) {
-        return repository
-                .findById(UUID.fromString(id))
+        return repository.findById(UUID.fromString(id))
                 .orElseThrow(ProjectNotFoundException::new);
     }
 
     @Override
     public List<ProjectResponseDto> getAll() {
-        return repository
-                .findAll()
+        return repository.findAll()
                 .stream()
                 .map(mappingService::mapEntityToDto)
                 .toList();
@@ -123,25 +82,15 @@ public class ProjectServiceImpl implements ProjectService {
     public List<ProjectResponseDto> findAllByOwner(AppUser owner) {
         return repository.findAllByOwner(owner)
                 .stream()
-                .map(project -> {
-                    // Маппим проект в DTO через MapStruct
-                    ProjectResponseDto dto = mappingService.mapEntityToDto(project);
+                .map(mappingService::mapEntityToDto)
+                .toList();
+    }
 
-                    // Берём все приглашения проекта и маппим их в DTO
-                    List<ProjectInvitationDto> invitationDtos = mappingService
-                            .mapInvitationsToDto(project.getInvitations());
-
-                    // Создаём новый DTO с подставленными приглашениями
-                    return new ProjectResponseDto(
-                            dto.id(),
-                            dto.title(),
-                            dto.description(),
-                            dto.owner(),
-                            dto.ownerAssigned(),
-                            dto.members(),
-                            invitationDtos
-                    );
-                })
+    @Override
+    public List<ProjectResponseDto> findAllVisibleForUser(AppUser user) {
+        return repository.findAllVisibleForUser(user)
+                .stream()
+                .map(mappingService::mapEntityToDto)
                 .toList();
     }
 
@@ -166,28 +115,16 @@ public class ProjectServiceImpl implements ProjectService {
         if (updateDTO.title() != null && !updateDTO.title().isBlank()) {
             project.setTitle(updateDTO.title());
         }
-
         if (updateDTO.description() != null && !updateDTO.description().isBlank()) {
             project.setDescription(updateDTO.description());
         }
 
-        Project updatedProject = repository.save(project);
-        ProjectResponseDto dto = mappingService.mapEntityToDto(updatedProject);
-        return new ProjectResponseDto(
-                dto.id(),
-                dto.title(),
-                dto.description(),
-                dto.owner(),
-                true,
-                dto.members(),
-                dto.invitations()
-        );
+        return mappingService.mapEntityToDto(repository.save(project));
     }
 
     @Override
     public void addUserToProject(String projectId, ProjectCollaboratorAddRequestDto requestDto, AppUser initiator) {
         Project project = getOrTrow(projectId);
-
         enforceTeamManagementPermission(project, initiator);
 
         AppUser userToAdd = userService.getByIdOrThrow(requestDto.userId());
@@ -198,7 +135,6 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public ProjectInvitationResponseDto inviteUserToProject(String projectId, ProjectInvitationRequestDto requestDto, AppUser initiator) {
         Project project = getOrTrow(projectId);
-
         enforceTeamManagementPermission(project, initiator);
 
         InvitationService.InvitationCreationResult creationResult = invitationService.createOrRenewInvitation(
@@ -216,23 +152,17 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void updateUserRolesInProject(String projectId,
-                                         String userId,
-                                         UpdateCollaboratorRolesDto dto,
-                                         AppUser initiator) {
+    public void updateUserRolesInProject(String projectId, String userId, UpdateCollaboratorRolesDto dto, AppUser initiator) {
         Project project = getOrTrow(projectId);
         enforceTeamManagementPermission(project, initiator);
 
         AppUser userToUpdate = userService.getByIdOrThrow(userId);
-        Set<ProjectRoles> newRoles = EnumSet.copyOf(dto.newRoles());
-        collaboratorService.updateCollaboratorRoles(userToUpdate, project, newRoles);
+        collaboratorService.updateCollaboratorRoles(userToUpdate, project, EnumSet.copyOf(dto.newRoles()));
     }
 
     private void enforceTeamManagementPermission(Project project, AppUser initiator) {
         boolean isOwner = project.getOwner().equals(initiator);
-        if (isOwner) {
-            return;
-        }
+        if (isOwner) return;
 
         boolean hasPermission = collaboratorService.hasUserPermission(
                 initiator,
