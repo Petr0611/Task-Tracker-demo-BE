@@ -160,6 +160,35 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
     }
 
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponseDto> handleConstraintViolationException(
+            jakarta.validation.ConstraintViolationException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Constraint violation: {}", ex.getMessage());
+
+        List<ValidationErrorDto> validationErrors = ex.getConstraintViolations().stream()
+                .map(violation -> new ValidationErrorDto(
+                        violation.getPropertyPath().toString(),
+                        List.of(violation.getMessage())
+                ))
+                .collect(Collectors.toList());
+
+        ErrorResponseDto errorResponse = new ErrorResponseDto(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Validation failed for one or more fields",
+                validationErrors,
+                request.getRequestURI()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorResponse);
+    }
+
+
 //    *
 //     * Delegate any AuthenticationException (401 Unauthorized)
 //     * to the RestAuthenticationEntryPoint, so it renders your JSON.
