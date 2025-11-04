@@ -121,15 +121,18 @@ public class TaskColumnServiceImpl implements TaskColumnService {
     }
 
     private void enforceProjectAccess(Project project, AppUser user) {
-        if (isProjectOwner(project, user)) {
+        if (project.getOwner() != null && project.getOwner().equals(user)) {
             return;
         }
 
-        final boolean userInProject = collaboratorService.isUserInProject(user, project);
-        if (!userInProject) {
-            throw new RestApiException(HttpStatus.FORBIDDEN, "User has no access to this project");
+        boolean userInProject = collaboratorService.isUserInProject(user, project);
+        if (userInProject) {
+            return;
         }
+
+        throw new RestApiException(HttpStatus.FORBIDDEN, "User has no access to this project");
     }
+
 
     private void enforceTaskManagementPermission(Project project, AppUser user) {
         if (isProjectOwner(project, user)) {

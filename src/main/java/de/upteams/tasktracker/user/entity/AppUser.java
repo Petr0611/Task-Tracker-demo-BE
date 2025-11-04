@@ -13,6 +13,7 @@ import org.hibernate.annotations.ColumnDefault;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Application User entity
@@ -72,6 +73,18 @@ public class AppUser extends BaseEntity {
         this.email = email;
         role = Role.ROLE_USER;
         this.projects = new ArrayList<>();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof AppUser appUser)) return false;
+        if (!super.equals(o)) return false;
+        return Objects.equals(password, appUser.password) && Objects.equals(email, appUser.email) && confirmationStatus == appUser.confirmationStatus && role == appUser.role && Objects.equals(displayName, appUser.displayName) && Objects.equals(position, appUser.position) && Objects.equals(department, appUser.department) && Objects.equals(avatarUrl, appUser.avatarUrl) && Objects.equals(bio, appUser.bio) && Objects.equals(projects, appUser.projects);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), password, email, confirmationStatus, role, displayName, position, department, avatarUrl, bio, projects);
     }
 
     @Override

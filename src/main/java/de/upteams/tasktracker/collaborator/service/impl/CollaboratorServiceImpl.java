@@ -27,8 +27,18 @@ public class CollaboratorServiceImpl implements CollaboratorService {
 
     @Override
     public boolean isUserInProject(AppUser user, Project project) {
-        return getCollaborator(user, project).isPresent();
+        if (project.getOwner() != null && project.getOwner().equals(user)) {
+            return true;
+        }
+
+        return collaboratorRepository.findCollaborator(user, project)
+                .map(collaborator ->
+                        collaborator.getStatus() == CollaboratorStatus.ACTIVE ||
+                                collaborator.getStatus() == CollaboratorStatus.PENDING
+                )
+                .orElse(false);
     }
+
 
     @Override
     public Optional<Collaborator> getCollaborator(AppUser user, Project project) {
