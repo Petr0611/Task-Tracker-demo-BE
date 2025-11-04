@@ -12,9 +12,12 @@ import de.upteams.tasktracker.project.dto.response.RoleResponse;
 import de.upteams.tasktracker.project.service.ProjectRoleService;
 import de.upteams.tasktracker.project.service.interfaces.ProjectService;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
+import de.upteams.tasktracker.user.entity.AppUser;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -48,16 +51,11 @@ public class ProjectController implements ProjectApi {
         return service.getById(id);
     }
 
-//    @Override
-//    public List<ProjectResponseDto> getAll() {
-//        return service.getAll();
-//    }
-
     @Override
+    @GetMapping
     public List<ProjectResponseDto> getAll(AuthUserDetails principal) {
-        return service.findAllByOwner(principal.user());
+        return projectService.findAllVisibleForUser(principal.user());
     }
-
 
     @Override
     public void deleteById(String id) {
@@ -96,6 +94,6 @@ public class ProjectController implements ProjectApi {
 
     @Override
     public List<ProjectResponseDto> getMyProjects(AuthUserDetails principal) {
-        return projectService.findAllByOwner(principal.user());
+        return projectService.findAllVisibleForUser(principal.user());
     }
 }

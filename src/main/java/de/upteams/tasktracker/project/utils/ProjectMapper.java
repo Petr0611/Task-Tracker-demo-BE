@@ -1,13 +1,12 @@
 package de.upteams.tasktracker.project.utils;
 
+import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.collaborator.entity.CollaboratorStatus;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
-import de.upteams.tasktracker.invitation.dto.InvitationAcceptResponseDto;
 import de.upteams.tasktracker.invitation.dto.ProjectInvitationDto;
 import de.upteams.tasktracker.invitation.entity.Invitation;
 import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
 import de.upteams.tasktracker.project.dto.response.MemberDto;
-import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.entity.Project;
 import de.upteams.tasktracker.task.utils.TaskMappingService;
@@ -29,6 +28,7 @@ public interface ProjectMapper {
 
     @Mapping(source = "invitations", target = "invitations", qualifiedByName = "mapInvitationsToDto")
     @Mapping(source = "owner", target = "owner")
+    @Mapping(source = "owner", target = "ownerAssigned", qualifiedByName = "mapOwnerAssigned")
     @Mapping(source = "projectTeam", target = "members", qualifiedByName = "mapCollaboratorsToMembers")
     ProjectResponseDto mapEntityToDto(Project entity);
 
@@ -40,12 +40,22 @@ public interface ProjectMapper {
     @Named("mapCollaboratorsToMembers")
     default List<MemberDto> mapCollaboratorsToMembers(Set<Collaborator> collaborators) {
         return collaborators.stream()
-                .map(c -> new MemberDto(
-                        c.getAppUser().getId(),
-                        c.getAppUser().getDisplayName(),
-                        c.getProjectRolesSet().stream().findFirst().map(Enum::name).orElse("MEMBER"),
-                        c.getAppUser().getAvatarUrl()
-                ))
+                .map(c -> {
+                    String role;
+                    Project project = c.getProject();
+                    // Если пользователь — владелец проекта, ставим роль OWNER
+                    if (project.getOwner() != null && project.getOwner().equals(c.getAppUser())) {
+                        role = ProjectRoles.OWNER.name();
+                    } else {
+                        role = c.getProjectRolesSet().stream().findFirst().map(Enum::name).orElse("MEMBER");
+                    }
+                    return new MemberDto(
+                            c.getAppUser().getId(),
+                            c.getAppUser().getDisplayName(),
+                            role,
+                            c.getAppUser().getAvatarUrl()
+                    );
+                })
                 .toList();
     }
 
@@ -54,7 +64,7 @@ public interface ProjectMapper {
         if (invitations == null) return List.of();
         return invitations.stream()
                 .map(inv -> new ProjectInvitationDto(
-                        inv.getEmail(), // ← теперь email
+                        inv.getEmail(),
                         inv.getRole(),
                         switch (inv.getStatus()) {
                             case PENDING -> CollaboratorStatus.PENDING;
@@ -63,12 +73,11 @@ public interface ProjectMapper {
                         }
                 ))
                 .toList();
-
     }
 
-
-    private String extractPrimaryRole(Set<ProjectRoles> roles) {
-        return roles.stream().findFirst().map(Enum::name).orElse("MEMBER");
+    @Named("mapOwnerAssigned")
+    default boolean mapOwnerAssigned(de.upteams.tasktracker.user.entity.AppUser owner) {
+        return owner != null && owner.getId() != null;
     }
 
     @Named("uuidToString")

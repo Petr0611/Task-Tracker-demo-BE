@@ -3,7 +3,6 @@ package de.upteams.tasktracker.invitation.service.impl;
 import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
-import de.upteams.tasktracker.exception.handling.exceptions.common.OwnerAlreadyExistsException;
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
 import de.upteams.tasktracker.invitation.entity.Invitation;
 import de.upteams.tasktracker.invitation.entity.InvitationStatus;
@@ -22,10 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -145,14 +141,6 @@ public class InvitationServiceImpl implements InvitationService {
     }
 
     private Invitation createInvitation(Project project, String email, ProjectRoles role, Instant expiresAt) {
-        if (role == ProjectRoles.OWNER) {
-            boolean hasOwner = project.getProjectTeam().stream()
-                    .anyMatch(collaborator -> collaborator.getProjectRolesSet().contains(ProjectRoles.OWNER));
-
-            if (hasOwner) {
-                throw new OwnerAlreadyExistsException();
-            }
-        }
         Invitation invitation = new Invitation();
         invitation.setProject(project);
         invitation.setEmail(email);
@@ -164,25 +152,23 @@ public class InvitationServiceImpl implements InvitationService {
     }
 
     private Collaborator activateCollaborator(AppUser user, Invitation invitation) {
-        if (invitation.getRole() == ProjectRoles.OWNER) {
-            boolean hasOwner = invitation.getProject().getProjectTeam().stream()
-                    .anyMatch(collab -> collab.getProjectRolesSet().contains(ProjectRoles.OWNER));
+        Set<ProjectRoles> roles = EnumSet.of(invitation.getRole());
 
-            if (hasOwner) {
-                throw new OwnerAlreadyExistsException();
-            }
-        }
         Collaborator collaborator = collaboratorService.activateCollaborator(
                 user,
                 invitation.getProject(),
-                EnumSet.of(invitation.getRole())
+                roles
         );
 
         invitation.setStatus(InvitationStatus.USED);
         invitationRepository.save(invitation);
+
         log.info("Invitation {} consumed for project {}", invitation.getId(), invitation.getProject().getId());
+        log.info("Saving collaborator: user={}, project={}, roles={}", user.getEmail(), invitation.getProject().getId(), roles);
+
         return collaborator;
     }
+
 
     private String normalizeEmail(String email) {
         return email.toLowerCase(Locale.ROOT).trim();
