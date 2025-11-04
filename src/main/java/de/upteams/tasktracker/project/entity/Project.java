@@ -34,17 +34,20 @@ public class Project extends BaseEntity {
 
     @Column(name = "title", nullable = false)
     @NotBlank
-    @Length(min = ProjectValidationConstats.NAME_MIN_LENGTH, max = ProjectValidationConstats.NAME_MAX_LENGTH)
+    @Length(min = ProjectValidationConstats.TITLE_MIN,
+            max = ProjectValidationConstats.TITLE_MAX)
     @Pattern(
-            regexp = ProjectValidationConstats.NAME_REGEX,
-            message = "Project title should be at least 3 character length and start with capital letter"
+            regexp = ProjectValidationConstats.BASE_REGEX,
+            message = "Project title " + ProjectValidationConstats.BASE_MESSAGE
     )
     private String title;
 
     @Column(name = "description")
+    @Length(min = ProjectValidationConstats.DESCRIPTION_MIN,
+            max = ProjectValidationConstats.DESCRIPTION_MAX)
     @Pattern(
-            regexp = "[A-Z][a-zA-Z1-9,.%:?&!$;*() ]{2,}",
-            message = "Project description should be at least 3 character length and start with capital letter"
+            regexp = ProjectValidationConstats.BASE_REGEX,
+            message = "Project description " + ProjectValidationConstats.BASE_MESSAGE
     )
     private String description;
 
