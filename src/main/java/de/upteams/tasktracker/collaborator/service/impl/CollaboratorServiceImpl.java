@@ -57,12 +57,11 @@ public class CollaboratorServiceImpl implements CollaboratorService {
 
     @Override
     public Collaborator addCollaborator(AppUser user, Project project, Set<ProjectRoles> roles) {
+        project.setOwnerAssigned(true);
         if (roles.contains(ProjectRoles.OWNER)) {
             boolean hasOwner = collaboratorRepository.existsByProjectAndRole(project, ProjectRoles.OWNER);
             if (hasOwner) {
-                throw new OwnerAlreadyExistsException(
-                        "Project already has an OWNER. Only one OWNER is allowed per project."
-                );
+                throw new OwnerAlreadyExistsException();
             }
         }
 
@@ -107,7 +106,7 @@ public class CollaboratorServiceImpl implements CollaboratorService {
             boolean isAlreadyOwner = currentCollaborator.getProjectRolesSet().contains(ProjectRoles.OWNER);
 
             if (hasAnotherOwner && !isAlreadyOwner) {
-                throw new OwnerAlreadyExistsException("Project already has an OWNER. Only one OWNER is allowed per project.");
+                throw new OwnerAlreadyExistsException();
             }
         }
 

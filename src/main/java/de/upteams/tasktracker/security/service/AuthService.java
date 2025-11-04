@@ -59,10 +59,12 @@ public class AuthService {
     }
 
 
-    public String refreshAccessToken(String refreshToken) {
+    public TokenResponseDto refreshAccessToken(String refreshToken) {
         if (jwtTokenService.validateToken(refreshToken, JwtTokenService.TokenType.REFRESH)) {
             String username = jwtTokenService.getUsernameFromToken(refreshToken, JwtTokenService.TokenType.REFRESH);
-            return jwtTokenService.generateAccessToken(username);
+            String newAccess = jwtTokenService.generateAccessToken(username);
+            String newRefresh = jwtTokenService.generateRefreshToken(username);
+            return new TokenResponseDto(newAccess, newRefresh);
         }
         throw new RestApiException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
     }
