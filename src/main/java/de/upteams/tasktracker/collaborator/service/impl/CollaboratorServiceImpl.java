@@ -10,6 +10,8 @@ import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorServic
 import de.upteams.tasktracker.exception.handling.exceptions.common.OwnerAlreadyExistsException;
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
 import de.upteams.tasktracker.project.entity.Project;
+import de.upteams.tasktracker.project.exception.ProjectNotFoundException;
+import de.upteams.tasktracker.project.persistence.ProjectRepository;
 import de.upteams.tasktracker.user.entity.AppUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ import java.util.*;
 public class CollaboratorServiceImpl implements CollaboratorService {
 
     private final CollaboratorRepository collaboratorRepository;
+    private final ProjectRepository projectRepository;
 
     @Override
     public boolean isUserInProject(AppUser user, Project project) {
@@ -49,6 +52,10 @@ public class CollaboratorServiceImpl implements CollaboratorService {
 
     @Override
     public boolean hasUserPermission(AppUser user, UUID projectId, Collection<ProjectRoles> requiredRoles) {
+        boolean projectExists = projectRepository.existsById(projectId);
+        if (!projectExists) {
+            throw new ProjectNotFoundException();
+        }
         return collaboratorRepository.findByAppUserIdAndProjectId(user.getId(), projectId)
                 .map(collaborator -> collaborator.getProjectRolesSet().stream()
                         .anyMatch(requiredRoles::contains))
@@ -128,7 +135,14 @@ public class CollaboratorServiceImpl implements CollaboratorService {
                     if (roles.contains(ProjectRoles.MEMBER)) return ProjectRoles.MEMBER;
                     return ProjectRoles.VIEWER;
                 })
-                .orElseThrow(() -> new RestApiException(HttpStatus.FORBIDDEN, "User is not a member of this project"));
+                .orElseGet(() -> {
+                    Project project = projectRepository.findById(projectId)
+                            .orElseThrow(ProjectNotFoundException::new);
+                    if (project.getOwner().equals(user)) {
+                        return ProjectRoles.OWNER;
+                    }
+                    throw new CollaboratorNotFoundException();
+                });
     }
 
     private boolean hasAnyRequiredRole(Collaborator collaborator, Collection<ProjectRoles> requiredRoles) {
