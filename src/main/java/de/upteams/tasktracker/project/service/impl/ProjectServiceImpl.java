@@ -31,7 +31,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -82,11 +81,11 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectResponseDto getById(String id) {
-        return mappingService.mapEntityToDto(getOrTrow(id));
+        return mappingService.mapEntityToDto(this.getOrThrow(id));
     }
 
     @Override
-    public Project getOrTrow(String id) {
+    public Project getOrThrow(String id) {
         return repository.findById(UUID.fromString(id))
                 .orElseThrow(ProjectNotFoundException::new);
     }
@@ -117,12 +116,14 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void delete(String id) {
-        repository.deleteById(UUID.fromString(id));
+        UUID uuid = UUID.fromString(id);
+        Project project = repository.findById(uuid).orElseThrow(ProjectNotFoundException::new);
+        repository.delete(project);
     }
 
     @Override
     public ProjectResponseDto updateProject(String id, ProjectUpdateDto updateDTO, AuthUserDetails principal) {
-        Project project = getOrTrow(id);
+        Project project = this.getOrThrow(id);
 
         if (!permissionEvaluator.hasAnyRole(
                 id,
@@ -144,7 +145,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void addUserToProject(String projectId, ProjectCollaboratorAddRequestDto requestDto, AppUser initiator) {
-        Project project = getOrTrow(projectId);
+        Project project = this.getOrThrow(projectId);
         enforceTeamManagementPermission(project, initiator);
 
         AppUser userToAdd = userService.getByIdOrThrow(requestDto.userId());
@@ -154,7 +155,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectInvitationResponseDto inviteUserToProject(String projectId, ProjectInvitationRequestDto requestDto, AppUser initiator) {
-        Project project = getOrTrow(projectId);
+        Project project = this.getOrThrow(projectId);
         enforceTeamManagementPermission(project, initiator);
 
         InvitationService.InvitationCreationResult creationResult = invitationService.createOrRenewInvitation(
@@ -173,7 +174,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void updateUserRolesInProject(String projectId, String userId, UpdateCollaboratorRolesDto dto, AppUser initiator) {
-        Project project = getOrTrow(projectId);
+        Project project = this.getOrThrow(projectId);
         enforceTeamManagementPermission(project, initiator);
 
         AppUser userToUpdate = userService.getByIdOrThrow(userId);
