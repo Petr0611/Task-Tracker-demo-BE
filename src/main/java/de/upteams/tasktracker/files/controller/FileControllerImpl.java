@@ -103,7 +103,7 @@ public class FileControllerImpl implements FileController {
     @Override
     @Operation(
             summary = "Upload a new attachment for a task",
-            description = "Uploads a file (PNG, JPG) to the server and links it to a specific task. The file will be stored on cloud and its URL added to the task's attachments. Max file size is 10 MB. "
+            description = "Uploads a file (PNG, JPG) to the server and links it to a specific task. The file will be stored on cloud and its URL added to the task's attachments. Max file size is 5 MB. "
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Attachment uploaded successfully",
@@ -115,8 +115,9 @@ public class FileControllerImpl implements FileController {
             @ApiResponse(responseCode = "413", description = "File too large", content = @Content),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
+
     @PostMapping(
-            value = "/tasks/{taskId}/attachments/upload",
+            value = "tasks/{taskId}/attachments/upload",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE
     )
@@ -128,7 +129,7 @@ public class FileControllerImpl implements FileController {
             @RequestPart("file") MultipartFile file,
             @Parameter(description = "ID of task", example = "002e5ce3-b16c-40da-a830-274fe6882aab")
             @PathVariable String taskId,
-            Principal principal
+            @Parameter(hidden = true) Principal principal
     ) {
         validateFile(file);
         AppUser user = userService.getByEmailOrThrow(principal.getName());
@@ -141,7 +142,7 @@ public class FileControllerImpl implements FileController {
     }
 
     @Override
-    @DeleteMapping("/tasks/{taskId}/attachments/{attachmentId}")
+    @DeleteMapping("tasks/{taskId}/attachments/{attachmentId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Operation(
             summary = "Delete attachment from task",
