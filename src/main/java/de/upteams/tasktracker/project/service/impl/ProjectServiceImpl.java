@@ -181,6 +181,35 @@ public class ProjectServiceImpl implements ProjectService {
         collaboratorService.updateCollaboratorRoles(userToUpdate, project, EnumSet.copyOf(dto.newRoles()));
     }
 
+    @Override
+    @Transactional
+    public void transferOwnership(String projectId, String newOwnerId, AppUser initiator) {
+        Project project = getOrThrow(projectId);
+
+        if (!project.getOwner().equals(initiator)) {
+            throw new RestApiException(HttpStatus.FORBIDDEN, "Only current owner can transfer ownership");
+        }
+
+        UUID newOwnerUuid;
+        try {
+            newOwnerUuid = UUID.fromString(newOwnerId);
+        } catch (IllegalArgumentException ex) {
+            throw new RestApiException(HttpStatus.BAD_REQUEST, "Invalid user ID format");
+        }
+
+        AppUser newOwner = userService.getByIdOrThrow(String.valueOf(newOwnerUuid));
+
+        boolean isEligible = collaboratorService.hasUserPermission(newOwner, project, ProjectRoles.OWNER);
+        if (!isEligible) {
+            throw new RestApiException(HttpStatus.BAD_REQUEST, "User must be an active OWNER collaborator to receive ownership");
+        }
+
+        // 🔄 Передача владения
+        project.setOwner(newOwner);
+        repository.save(project);
+    }
+
+
     private void enforceTeamManagementPermission(Project project, AppUser initiator) {
         boolean isOwner = project.getOwner().equals(initiator);
         if (isOwner) return;
@@ -195,4 +224,7 @@ public class ProjectServiceImpl implements ProjectService {
             throw new RestApiException(HttpStatus.FORBIDDEN, "User has no rights to manage project team");
         }
     }
+
+
+
 }

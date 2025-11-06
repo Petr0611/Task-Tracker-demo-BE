@@ -18,17 +18,12 @@ public class InvitationController implements InvitationApi {
     @Override
     public InvitationAcceptResponseDto acceptInvitation(
             String inviteToken,
-            @AuthenticationPrincipal
-            AuthUserDetails principal
+            @AuthenticationPrincipal AuthUserDetails principal
     ) {
-        InvitationService.InvitationAcceptanceResult result =
-                invitationService.acceptInvitation(inviteToken, principal != null ? principal.user() : null);
-
-        return new InvitationAcceptResponseDto(
-                result.invitation().getProject().getId().toString(),
-                result.invitation().getProject().getTitle(),
-                result.collaborator().getStatus(),
-                result.invitation().getRole()
+        return invitationService.acceptInvitation(
+                inviteToken,
+                principal != null ? principal.user() : null
         );
     }
 }
+

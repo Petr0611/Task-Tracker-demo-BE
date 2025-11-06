@@ -15,8 +15,14 @@ import java.util.UUID;
 @Repository
 public interface CollaboratorRepository extends JpaRepository<Collaborator, UUID> {
 
-    @Query("select c from Collaborator c where c.appUser = ?1 and c.project = ?2")
-    Optional<Collaborator> findCollaborator(AppUser user, Project project);
+    @Query("""
+    SELECT c FROM Collaborator c
+    WHERE c.appUser.id = :userId AND c.project.id = :projectId
+""")
+    Optional<Collaborator> findCollaborator(
+            @Param("userId") UUID userId,
+            @Param("projectId") UUID projectId
+    );
 
     Optional<Collaborator> findByAppUserIdAndProjectId(UUID appUserId, UUID projectId);
 

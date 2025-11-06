@@ -4,6 +4,7 @@ import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
+import de.upteams.tasktracker.invitation.dto.InvitationAcceptResponseDto;
 import de.upteams.tasktracker.invitation.entity.Invitation;
 import de.upteams.tasktracker.invitation.entity.InvitationStatus;
 import de.upteams.tasktracker.invitation.persistence.InvitationRepository;
@@ -76,40 +77,40 @@ public class InvitationServiceImpl implements InvitationService {
 
     @Override
     @Transactional
-
-    public InvitationAcceptanceResult acceptInvitation(String inviteToken, AppUser currentUser) {
+    public InvitationAcceptResponseDto acceptInvitation(String inviteToken, AppUser currentUser) {
         if (inviteToken == null || inviteToken.isBlank()) {
-            log.warn("Empty or null invitation token received by user {}", currentUser.getEmail());
             throw new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is required");
         }
 
-        // Находим приглашение по токену
         Invitation invitation = invitationRepository.findByInviteToken(inviteToken)
-                .orElseThrow(() -> {
-                    log.warn("Invitation token not found: {}", inviteToken);
-                    return new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is invalid");
-                });
+                .orElseThrow(() -> new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token is invalid"));
 
         Instant now = Instant.now(clock);
 
-        // Проверяем статус
         if (!InvitationStatus.PENDING.equals(invitation.getStatus())) {
-            log.warn("Invitation token {} already used or cancelled. Current status: {}", inviteToken, invitation.getStatus());
             throw new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token has already been used or cancelled");
         }
 
-        // Проверяем истечение
         if (invitation.getExpiresAt().isBefore(now)) {
-            log.warn("Invitation token {} expired at {}", inviteToken, invitation.getExpiresAt());
             throw new RestApiException(HttpStatus.BAD_REQUEST, "Invitation token has expired");
         }
 
-        // Активируем текущего пользователя в проекте
+        // 🔐 Проверка: токен должен быть принят только тем, кому он адресован
+        if (!invitation.getEmail().equalsIgnoreCase(currentUser.getEmail())) {
+            throw new RestApiException(HttpStatus.FORBIDDEN, "This invitation is not intended for your account");
+        }
+
         Collaborator collaborator = activateCollaborator(currentUser, invitation);
 
-        log.info("User {} successfully accepted invitation {} for project {}", currentUser.getEmail(), inviteToken, invitation.getProject().getId());
-        return new InvitationAcceptanceResult(invitation, collaborator);
+        return new InvitationAcceptResponseDto(
+                invitation.getProject().getId().toString(),
+                invitation.getProject().getTitle(),
+                collaborator.getStatus(),
+                invitation.getRole()
+        );
     }
+
+
 
 
 //    public InvitationAcceptanceResult acceptInvitation(String inviteToken, AppUser currentUser) {
