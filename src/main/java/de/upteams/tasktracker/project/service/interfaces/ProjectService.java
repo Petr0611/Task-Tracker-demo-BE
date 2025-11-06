@@ -22,7 +22,7 @@ public interface ProjectService {
 
     ProjectResponseDto getById(String id);
 
-    Project getOrTrow(String id);
+    Project getOrThrow(String id);
 
     List<ProjectResponseDto> getAll();
 

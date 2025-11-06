@@ -114,7 +114,7 @@ public class TaskColumnServiceImpl implements TaskColumnService {
 
     private Project getProjectOrThrow(String projectId) {
         try {
-            return projectService.getOrTrow(projectId);
+            return projectService.getOrThrow(projectId);
         } catch (IllegalArgumentException ex) {
             throw new RestApiException(HttpStatus.BAD_REQUEST, TaskValidationConstats.PROJECT_ID_INVALID_MESSAGE);
         }
