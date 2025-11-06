@@ -184,7 +184,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public void transferOwnership(String projectId, String newOwnerId, AppUser initiator) {
-        Project project = getOrTrow(projectId);
+        Project project = getOrThrow(projectId);
 
         if (!project.getOwner().equals(initiator)) {
             throw new RestApiException(HttpStatus.FORBIDDEN, "Only current owner can transfer ownership");
