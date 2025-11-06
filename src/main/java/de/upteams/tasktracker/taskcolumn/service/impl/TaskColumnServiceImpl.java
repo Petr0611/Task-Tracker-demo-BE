@@ -150,13 +150,18 @@ public class TaskColumnServiceImpl implements TaskColumnService {
     }
 
     private void enforceOwnerPermission(Project project, AppUser user) {
-        if (!isProjectOwner(project, user)) {
+        boolean isOwner = project.getOwner() != null && project.getOwner().getId().equals(user.getId());
+
+        boolean hasOwnerRole = collaboratorService.hasUserPermission(user, project, ProjectRoles.OWNER);
+
+        if (!isOwner && !hasOwnerRole) {
             throw new RestApiException(HttpStatus.FORBIDDEN, COLUMN_MANAGE_FORBIDDEN_MESSAGE);
         }
     }
 
+
     private boolean isProjectOwner(Project project, AppUser user) {
-        return project.getOwner() != null && project.getOwner().equals(user);
+        return project.getOwner() != null && project.getOwner().getId().equals(user.getId());
     }
 
     private int resolveOrderIndex(Project project, Integer requestedOrder) {

@@ -378,14 +378,19 @@ public class TaskServiceImpl implements TaskService {
 
     private void enforceProjectAccess(final Project project, final AppUser user) {
         if (isProjectOwner(project, user)) {
+            log.debug("User {} is the owner of project {}", user.getId(), project.getId());
             return;
         }
 
         final boolean userInProject = collaboratorService.isUserInProject(user, project);
+        log.debug("Checking access for userId={}, projectId={}, userInProject={}",
+                user.getId(), project.getId(), userInProject);
+
         if (!userInProject) {
             throw new RestApiException(HttpStatus.FORBIDDEN, "User has no access to this project");
         }
     }
+
 
     private void enforceTaskManagementPermission(final Project project, final AppUser user) {
         if (isProjectOwner(project, user)) {

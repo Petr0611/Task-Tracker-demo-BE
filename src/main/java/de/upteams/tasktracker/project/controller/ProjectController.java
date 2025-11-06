@@ -3,10 +3,7 @@ package de.upteams.tasktracker.project.controller;
 import de.upteams.tasktracker.collaborator.dto.UpdateCollaboratorRolesDto;
 import de.upteams.tasktracker.invitation.dto.ProjectInvitationResponseDto;
 import de.upteams.tasktracker.project.controller.api.ProjectApi;
-import de.upteams.tasktracker.project.dto.request.ProjectCollaboratorAddRequestDto;
-import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
-import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
-import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
+import de.upteams.tasktracker.project.dto.request.*;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.dto.response.RoleResponse;
 import de.upteams.tasktracker.project.service.ProjectRoleService;
@@ -40,6 +37,8 @@ public class ProjectController implements ProjectApi {
         this.projectRoleService = projectRoleService;
         this.projectService = projectService;
     }
+
+
 
     @Override
     public ProjectResponseDto save(@Valid ProjectCreateDto newProjectDto, AuthUserDetails principal) {
@@ -96,4 +95,10 @@ public class ProjectController implements ProjectApi {
     public List<ProjectResponseDto> getMyProjects(AuthUserDetails principal) {
         return projectService.findAllVisibleForUser(principal.user());
     }
+
+    @Override
+    public void transferOwnership(String projectId, TransferOwnershipRequestDto requestDto, AuthUserDetails principal) {
+        projectService.transferOwnership(projectId, requestDto.newOwnerId(), principal.user());
+    }
+
 }

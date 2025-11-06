@@ -19,10 +19,12 @@ public abstract class BaseEntity implements EntityId {
     @Column(
             name = "id",
             updatable = false,
-            nullable = false
+            nullable = false,
+            columnDefinition = "BINARY(16"
     )
     @Setter(AccessLevel.NONE)
     protected UUID id;
+
 
     @Override
     public boolean equals(Object o) {

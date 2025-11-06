@@ -4,10 +4,7 @@ import de.upteams.tasktracker.collaborator.dto.UpdateCollaboratorRolesDto;
 import de.upteams.tasktracker.exception.handling.response.ErrorResponseDto;
 import de.upteams.tasktracker.exception.handling.response.ValidationErrorDto;
 import de.upteams.tasktracker.invitation.dto.ProjectInvitationResponseDto;
-import de.upteams.tasktracker.project.dto.request.ProjectCollaboratorAddRequestDto;
-import de.upteams.tasktracker.project.dto.request.ProjectCreateDto;
-import de.upteams.tasktracker.project.dto.request.ProjectInvitationRequestDto;
-import de.upteams.tasktracker.project.dto.request.ProjectUpdateDto;
+import de.upteams.tasktracker.project.dto.request.*;
 import de.upteams.tasktracker.project.dto.response.ProjectResponseDto;
 import de.upteams.tasktracker.project.dto.response.RoleResponse;
 import de.upteams.tasktracker.security.service.AuthUserDetails;
@@ -314,6 +311,40 @@ public interface ProjectApi {
     @GetMapping("/my")
     @PreAuthorize("isAuthenticated()")
     List<ProjectResponseDto> getMyProjects(
+            @AuthenticationPrincipal
+            @Parameter(hidden = true)
+            AuthUserDetails principal
+    );
+
+    @Operation(
+            summary = "Transfer project ownership",
+            description = "Allows the current owner to transfer ownership to another collaborator with OWNER role"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Ownership transferred successfully"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — only current owner can transfer ownership",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid target user or role",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "Project or user not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @PutMapping("/{projectId}/transfer-ownership")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("@permissionEvaluator.isOwner(#projectId, authentication)")
+    void transferOwnership(
+            @PathVariable
+            @Parameter(description = "Project ID to transfer ownership for")
+            String projectId,
+
+            @RequestBody
+            @Valid
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Target user ID to become new owner"
+            )
+            TransferOwnershipRequestDto requestDto,
+
             @AuthenticationPrincipal
             @Parameter(hidden = true)
             AuthUserDetails principal

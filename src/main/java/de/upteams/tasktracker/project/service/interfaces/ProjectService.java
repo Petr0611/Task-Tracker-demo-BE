@@ -39,4 +39,8 @@ public interface ProjectService {
     ProjectInvitationResponseDto inviteUserToProject(String projectId, ProjectInvitationRequestDto requestDto, AppUser initiator);
 
     void updateUserRolesInProject(String projectId, String userId, UpdateCollaboratorRolesDto dto, AppUser initiator);
+
+    void transferOwnership(String projectId, String newOwnerId, AppUser initiator);
+
+
 }

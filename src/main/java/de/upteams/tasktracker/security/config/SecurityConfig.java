@@ -103,6 +103,8 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.POST, "/api/v1/projects/*/invitations").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/invitations/accept").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/projects/*/transfer-ownership").permitAll()
+
 
 
                         .anyRequest().authenticated()
