@@ -2,7 +2,9 @@ package de.upteams.tasktracker.invitation.service.impl;
 
 import de.upteams.tasktracker.collaborator.entity.Collaborator;
 import de.upteams.tasktracker.collaborator.entity.ProjectRoles;
+import de.upteams.tasktracker.collaborator.exception.CollaboratorAlreadyExistsException;
 import de.upteams.tasktracker.collaborator.service.interfaces.CollaboratorService;
+import de.upteams.tasktracker.exception.handling.exceptions.common.OwnerAlreadyExistsException;
 import de.upteams.tasktracker.exception.handling.exceptions.common.RestApiException;
 import de.upteams.tasktracker.invitation.dto.InvitationAcceptResponseDto;
 import de.upteams.tasktracker.invitation.entity.Invitation;
@@ -42,6 +44,19 @@ public class InvitationServiceImpl implements InvitationService {
     public InvitationCreationResult createOrRenewInvitation(Project project, String email, ProjectRoles role) {
         String normalizedEmail = normalizeEmail(email);
         Instant newExpiry = Instant.now(clock).plus(INVITATION_TTL);
+
+        userService.getByEmail(normalizedEmail).ifPresent(existingUser -> {
+            boolean alreadyCollaborator =
+                    collaboratorService.getCollaborator(existingUser, project).isPresent();
+            if (alreadyCollaborator) {
+                throw new CollaboratorAlreadyExistsException();
+            }
+        });
+
+        if (role == ProjectRoles.OWNER &&
+                collaboratorService.projectHasRole(project, ProjectRoles.OWNER)) {
+            throw new OwnerAlreadyExistsException();
+        }
 
         Invitation invitation = invitationRepository
                 .findByProjectAndEmailAndStatus(project, normalizedEmail, InvitationStatus.PENDING)
@@ -109,8 +124,6 @@ public class InvitationServiceImpl implements InvitationService {
                 invitation.getRole()
         );
     }
-
-
 
 
 //    public InvitationAcceptanceResult acceptInvitation(String inviteToken, AppUser currentUser) {
