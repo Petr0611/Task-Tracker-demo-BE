@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,9 +25,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
-import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.io.IOException;
 
 /**
  * Global handler for all exceptions that threw in the application
@@ -35,6 +35,28 @@ import java.io.IOException;
 @Hidden
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler({
+            HttpMessageNotReadableException.class,
+            MethodArgumentTypeMismatchException.class
+    })
+    public ResponseEntity<ErrorResponseDto> handleBadRequestPayload(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Bad request payload: {}", ex.getMessage());
+
+        ErrorResponseDto errorResponse = new ErrorResponseDto(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Invalid payload",
+                List.of(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
 
     @ExceptionHandler(RestApiException.class)
     public ResponseEntity<ErrorResponseDto> handleRestApiException(

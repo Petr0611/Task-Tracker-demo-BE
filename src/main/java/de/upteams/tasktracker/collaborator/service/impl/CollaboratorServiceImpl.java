@@ -45,7 +45,6 @@ public class CollaboratorServiceImpl implements CollaboratorService {
     }
 
 
-
     @Override
     public Optional<Collaborator> getCollaborator(AppUser user, Project project) {
         return collaboratorRepository.findCollaborator(user.getId(), project.getId());
@@ -96,15 +95,25 @@ public class CollaboratorServiceImpl implements CollaboratorService {
 
     @Override
     public Collaborator activateCollaborator(AppUser user, Project project, Set<ProjectRoles> roles) {
+        if (roles.contains(ProjectRoles.OWNER)) {
+            boolean hasOwner = collaboratorRepository.existsByProjectAndRole(project, ProjectRoles.OWNER);
+
+            boolean isAlreadyOwner = collaboratorRepository.findCollaborator(user.getId(), project.getId())
+                    .map(c -> c.getProjectRolesSet().contains(ProjectRoles.OWNER))
+                    .orElse(false);
+
+            if (hasOwner && !isAlreadyOwner) {
+                throw new OwnerAlreadyExistsException();
+            }
+        }
+
         Collaborator collaborator = collaboratorRepository.findCollaborator(user.getId(), project.getId())
                 .orElseGet(() -> buildNewCollaborator(user, project, Set.of()));
 
         collaborator.getProjectRolesSet().addAll(roles);
         collaborator.setStatus(CollaboratorStatus.ACTIVE);
 
-        log.info("Before save: collaborator={}, roles={}", collaborator.getAppUser().getEmail(), collaborator.getProjectRolesSet());
         Collaborator savedCollaborator = collaboratorRepository.save(collaborator);
-        log.info("After save: collaboratorId={}, roles={}", savedCollaborator.getId(), savedCollaborator.getProjectRolesSet());
 
         project.getProjectTeam().add(savedCollaborator);
         return savedCollaborator;
@@ -152,6 +161,11 @@ public class CollaboratorServiceImpl implements CollaboratorService {
                     return ProjectRoles.VIEWER;
                 })
                 .orElseThrow(() -> new RestApiException(HttpStatus.FORBIDDEN, "User is not a member of this project"));
+    }
+
+    @Override
+    public boolean projectHasRole(Project project, ProjectRoles projectRoles) {
+        return collaboratorRepository.existsByProjectAndRole(project, projectRoles);
     }
 
 
