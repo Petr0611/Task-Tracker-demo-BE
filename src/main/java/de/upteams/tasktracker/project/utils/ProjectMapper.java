@@ -39,24 +39,56 @@ public interface ProjectMapper {
 
     @Named("mapCollaboratorsToMembers")
     default List<MemberDto> mapCollaboratorsToMembers(Set<Collaborator> collaborators) {
+        if (collaborators == null || collaborators.isEmpty()) {
+            return List.of();
+        }
+
         return collaborators.stream()
+                .filter(c -> c.getAppUser() != null)
                 .map(c -> {
-                    String role;
                     Project project = c.getProject();
-                    // Если пользователь — владелец проекта, ставим роль OWNER
-                    if (project.getOwner() != null && project.getOwner().equals(c.getAppUser())) {
+
+                    String role;
+                    if (project != null
+                            && project.getOwner() != null
+                            && project.getOwner().equals(c.getAppUser())) {
                         role = ProjectRoles.OWNER.name();
                     } else {
-                        role = c.getProjectRolesSet().stream().findFirst().map(Enum::name).orElse("MEMBER");
+                        role = c.getProjectRolesSet().stream()
+                                .findFirst()
+                                .map(Enum::name)
+                                .orElse(ProjectRoles.MEMBER.name());
                     }
+
+                    String name = resolveMemberName(c);
+
                     return new MemberDto(
                             c.getAppUser().getId(),
-                            c.getAppUser().getDisplayName(),
+                            name,
                             role,
                             c.getAppUser().getAvatarUrl()
                     );
                 })
                 .toList();
+    }
+
+    default String resolveMemberName(Collaborator collaborator) {
+
+        if (collaborator == null || collaborator.getAppUser() == null) {
+            return "User";
+        }
+
+        var user = collaborator.getAppUser();
+
+        if (user.getDisplayName() != null && !user.getDisplayName().isBlank()) {
+            return user.getDisplayName();
+        }
+
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            return user.getEmail();
+        }
+
+        return "User";
     }
 
     @Named("mapInvitationsToDto")
